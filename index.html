@@ -1,25 +1,734 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Geoportal</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f1f1f1;
-      display: flex;
-      height: 100vh;
-      justify-content: center;
-      align-items: center;
-      margin: 0;
-    }
-    h1 {
-      color: #2b6cb0;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geoportal del Laboratorio de Agua de la Mancomunidad "Bosque Seco"</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+        }
+        
+        #header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        
+        #header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        #header p {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+        
+        .about-link {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            color: white;
+            text-decoration: none;
+            background: rgba(255,255,255,0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            transition: background 0.3s ease;
+        }
+        
+        .about-link:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 2rem;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s ease;
+        }
+        
+        .close {
+            position: absolute;
+            top: 1rem;
+            right: 1.5rem;
+            font-size: 2rem;
+            font-weight: bold;
+            cursor: pointer;
+            color: #999;
+            transition: color 0.3s ease;
+        }
+        
+        .close:hover {
+            color: #333;
+        }
+        
+        .modal h2 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+        
+        .modal p {
+            line-height: 1.6;
+            color: #555;
+            margin-bottom: 1rem;
+        }
+        
+        .modal ul {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .modal li {
+            margin-bottom: 0.5rem;
+            color: #555;
+        }
+        
+        .modal a {
+            color: #3498db;
+            text-decoration: none;
+            word-break: break-all;
+        }
+        
+        .modal a:hover {
+            text-decoration: underline;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        #container {
+            display: flex;
+            height: calc(100vh - 80px);
+        }
+        
+        #sidebar {
+            width: 320px;
+            background: white;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            z-index: 1000;
+        }
+        
+        #map {
+            flex: 1;
+            height: 100%;
+        }
+        
+        .panel {
+            margin: 1rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .panel-header {
+            background: #34495e;
+            color: white;
+            padding: 0.8rem;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        
+        .panel-content {
+            padding: 1rem;
+        }
+        
+        .layer-item {
+            display: flex;
+            align-items: center;
+            padding: 0.8rem;
+            border-bottom: 1px solid #eee;
+            transition: background 0.2s;
+        }
+        
+        .layer-item:hover {
+            background: #f8f9fa;
+        }
+        
+        .layer-item:last-child {
+            border-bottom: none;
+        }
+        
+        .layer-toggle {
+            margin-right: 0.8rem;
+            transform: scale(1.2);
+        }
+        
+        .layer-info {
+            flex: 1;
+        }
+        
+        .layer-name {
+            font-weight: 500;
+            color: #2c3e50;
+            margin-bottom: 0.2rem;
+        }
+        
+        .layer-description {
+            font-size: 0.8rem;
+            color: #7f8c8d;
+        }
+        
+        .layer-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-left: 0.5rem;
+            border: 2px solid #ddd;
+        }
+        
+        .status {
+            padding: 0.5rem 1rem;
+            margin: 1rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        
+        .status.loading {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .status.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .status.success {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        
+        .controls {
+            padding: 1rem;
+            border-top: 1px solid #eee;
+        }
+        
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-right: 0.5rem;
+            transition: background 0.2s;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+        }
+        
+        .btn.secondary {
+            background: #95a5a6;
+        }
+        
+        .btn.secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        /* Estilos para el popup */
+        .leaflet-popup-content-wrapper {
+            border-radius: 8px;
+        }
+        
+        .popup-header {
+            background: #3498db;
+            color: white;
+            padding: 0.5rem;
+            margin: -0.5rem -0.5rem 0.5rem -0.5rem;
+            border-radius: 4px 4px 0 0;
+            font-weight: bold;
+        }
+        
+        .popup-content {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .popup-row {
+            display: flex;
+            margin: 0.3rem 0;
+            padding: 0.2rem 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .popup-key {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-right: 0.5rem;
+            min-width: 60px;
+        }
+        
+        .popup-value {
+            flex: 1;
+            color: #34495e;
+        }
+    </style>
 </head>
 <body>
-  <h1>Bienvenido a mi Geoportal</h1>
+    <div id="header">
+        <h1>🗺️ Geoportal del Laboratorio de Agua de la Mancomunidad "Bosque Seco"</h1>
+        <p>Sistema de Información Geográfica - Datos PostGIS</p>
+        <a href="#" class="about-link" onclick="openModal()">Acerca de</a>
+    </div>
+    
+    <!-- Modal "Acerca de" -->
+    <div id="aboutModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Acerca del Laboratorio de Agua</h2>
+            <p>La Mancomunidad de Municipalidades del Suroccidente de la provincia de Loja "Bosque Seco" conformada por los Gobiernos Autónomos Descentralizados -GAD- de los cantones Macará, Paltas, Pindal, Puyango, Zapotillo tiene entre sus objetivos fortalecer la gestión integral del servicio público de agua potable en todas sus fases.</p>
+            
+            <p>En este contexto, desde el año 2017 ha implementado el Laboratorio de Agua, una iniciativa que brinda de forma gratuita servicios de análisis a los gobiernos autónomos descentralizados (GAD) municipales que la integran.</p>
+            
+            <p>Este laboratorio realiza los análisis establecidos en la Norma Técnica Ecuatoriana NTE INEN 1108, quinta revisión (INEN, 2014), disponible en el siguiente enlace: <a href="https://www.insistec.ec/images/insistec/02-cliente/07-descargas/NTE%20INEN%201108%20-%20AGUA%20POTABLE.%20REQUISITOS.pdf" target="_blank">NTE INEN 1108 - AGUA POTABLE. REQUISITOS</a></p>
+            
+            <p>Los análisis se realizan semanalmente y comprenden la toma de cinco muestras representativas en distintos puntos del sistema de abastecimiento:</p>
+            <ul>
+                <li>Agua cruda</li>
+                <li>Ingreso de agua a la planta de tratamiento</li>
+                <li>Agua almacenada en la planta de tratamiento</li>
+                <li>Red de distribución</li>
+                <li>Punto domiciliario</li>
+            </ul>
+            
+            <p>Los parámetros analizados incluyen:</p>
+            <ul>
+                <li><strong>Turbiedad:</strong> No debe superar los 5 NTU (Unidades Nefelométricas de Turbidez).</li>
+                <li><strong>Cloro residual:</strong> Debe estar dentro del rango de 0,3 a 1,5 mg/L.</li>
+                <li><strong>Coliformes fecales:</strong> No debe detectarse presencia (0 UFC – Unidades Formadoras de Colonias).</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div id="container">
+        <div id="sidebar">
+            <div class="panel">
+                <div class="panel-header">
+                    📊 Capas de Información
+                </div>
+                <div id="layers-content" class="panel-content">
+                    <div class="status loading" id="layers-status">
+                        🔄 Cargando capas disponibles...
+                    </div>
+                    <div id="layers-list"></div>
+                </div>
+                <div class="controls">
+                    <button class="btn" onclick="toggleAllLayers(true)">Mostrar Todas</button>
+                    <button class="btn secondary" onclick="toggleAllLayers(false)">Ocultar Todas</button>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <div class="panel-header">
+                    🎛️ Controles
+                </div>
+                <div class="panel-content">
+                    <button class="btn" onclick="zoomToExtent()">Zoom a Extensión</button>
+                    <button class="btn secondary" onclick="clearSelection()">Limpiar Selección</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="map"></div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    
+    <script>
+        // Configuración de Supabase
+        const SUPABASE_URL = 'https://jzlbdwuexolujlcqvkjp.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6bGJkd3VleG9sdWpsY3F2a2pwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAyOTM0NTYsImV4cCI6MjA2NTg2OTQ1Nn0.npWZOa83QXyqnWVtIIHXM7NXqeVMjeRWwoaE4k4YeA0';
+        
+        // Mapa base
+        let map;
+        let layers = {};
+        let layerColors = {};
+        
+        // Configuración de capas con orden específico
+        const LAYER_CONFIG = {
+            'cantonal_Loja': { 
+                name: 'Loja', 
+                description: 'Límites cantonales de Loja', 
+                type: 'polygon',
+                color: '#e74c3c',
+                order: 1
+            },
+            'cantonal_mancomunado': { 
+                name: 'Cantones de la MBS', 
+                description: 'Límites de los cantones de la MBS', 
+                type: 'polygon',
+                color: '#3498db',
+                order: 2
+            },
+            'parroquial_mancomunado': { 
+                name: 'Parroquias de la MBS', 
+                description: 'Límites parroquiales MBS', 
+                type: 'polygon',
+                color: '#2ecc71',
+                order: 3,
+                style: 'dashed-no-fill'
+            },
+            'centros_urbanos': { 
+                name: 'Centros Urbanos', 
+                description: 'Centros urbanos de la MBS', 
+                type: 'point',
+                color: '#f39c12',
+                order: 4
+            },
+            'PTAP_cab_cantonal': { 
+                name: 'PTAP Cabecera Cantonal', 
+                description: 'Plantas de tratamiento de agua potable - cabecera cantonal', 
+                type: 'point',
+                color: '#9b59b6',
+                order: 5
+            },
+            'PTAP_parroquias': { 
+                name: 'PTAP Parroquias', 
+                description: 'Plantas de tratamiento de agua potable - parroquiales', 
+                type: 'point',
+                color: '#1abc9c',
+                order: 6
+            },
+            'rios_dobles': { 
+                name: 'Ríos Dobles', 
+                description: 'Red hídrica de ríos dobles', 
+                type: 'line',
+                color: '#2980b9',
+                order: 7
+            }
+        };
+        
+        // Funciones para el modal
+        function openModal() {
+            document.getElementById('aboutModal').style.display = 'block';
+        }
+        
+        function closeModal() {
+            document.getElementById('aboutModal').style.display = 'none';
+        }
+        
+        // Cerrar modal al hacer clic fuera
+        window.onclick = function(event) {
+            const modal = document.getElementById('aboutModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+        
+        // Inicializar mapa
+        function initMap() {
+            map = L.map('map').setView([-4.0, -79.2], 9); // Coordenadas aproximadas de Loja
+            
+            // Capa base
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+            
+            // Cargar capas
+            loadLayers();
+        }
+        
+        // Cargar capas disponibles
+        async function loadLayers() {
+            const status = document.getElementById('layers-status');
+            const layersList = document.getElementById('layers-list');
+            
+            try {
+                // Obtener lista de tablas
+                const tables = await getAvailableTables();
+                
+                if (tables.length === 0) {
+                    status.className = 'status error';
+                    status.textContent = '❌ No se encontraron capas disponibles';
+                    return;
+                }
+                
+                // Crear controles de capa ordenados
+                layersList.innerHTML = '';
+                
+                // Ordenar tablas según el orden especificado
+                const orderedTables = tables.sort((a, b) => {
+                    const configA = LAYER_CONFIG[a] || { order: 999 };
+                    const configB = LAYER_CONFIG[b] || { order: 999 };
+                    return configA.order - configB.order;
+                });
+                
+                orderedTables.forEach(table => {
+                    const config = LAYER_CONFIG[table] || { 
+                        name: table, 
+                        description: 'Capa geográfica', 
+                        type: 'unknown',
+                        color: '#34495e'
+                    };
+                    
+                    layerColors[table] = config.color;
+                    
+                    const layerItem = document.createElement('div');
+                    layerItem.className = 'layer-item';
+                    layerItem.innerHTML = `
+                        <input type="checkbox" class="layer-toggle" id="layer-${table}" 
+                               onchange="toggleLayer('${table}', this.checked)">
+                        <div class="layer-info">
+                            <div class="layer-name">${config.name}</div>
+                            <div class="layer-description">${config.description}</div>
+                        </div>
+                        <div class="layer-color" style="background-color: ${config.color}"></div>
+                    `;
+                    layersList.appendChild(layerItem);
+                });
+                
+                status.className = 'status success';
+                status.textContent = `✅ ${tables.length} capas disponibles`;
+                
+            } catch (error) {
+                status.className = 'status error';
+                status.textContent = '❌ Error al cargar capas: ' + error.message;
+                console.error('Error loading layers:', error);
+            }
+        }
+        
+        // Obtener tablas disponibles
+        async function getAvailableTables() {
+            const knownTables = [
+                'cantonal_Loja',
+                'cantonal_mancomunado', 
+                'centros_urbanos',
+                'parroquial_mancomunado',
+                'PTAP_cab_cantonal',
+                'PTAP_parroquias',
+                'rios_dobles'
+            ];
+            
+            const validTables = [];
+            
+            for (const table of knownTables) {
+                try {
+                    const response = await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=*&limit=1`, {
+                        headers: {
+                            'apikey': SUPABASE_KEY,
+                            'Authorization': `Bearer ${SUPABASE_KEY}`
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        validTables.push(table);
+                    }
+                } catch (error) {
+                    console.warn(`Tabla ${table} no accesible:`, error);
+                }
+            }
+            
+            return validTables;
+        }
+        
+        // Alternar visibilidad de capa
+        async function toggleLayer(tableName, visible) {
+            if (visible) {
+                await loadLayer(tableName);
+            } else {
+                removeLayer(tableName);
+            }
+        }
+        
+        // Cargar capa específica
+        async function loadLayer(tableName) {
+            if (layers[tableName]) {
+                return; // Ya está cargada
+            }
+            
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/${tableName}?select=*`, {
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Error al cargar ${tableName}: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.length === 0) {
+                    console.warn(`Tabla ${tableName} está vacía`);
+                    return;
+                }
+                
+                // Crear capa de Leaflet
+                const layerGroup = L.layerGroup();
+                const config = LAYER_CONFIG[tableName] || {};
+                const color = config.color || layerColors[tableName];
+                
+                data.forEach(feature => {
+                    if (feature.geom || feature.geometry || feature.the_geom) {
+                        const geom = feature.geom || feature.geometry || feature.the_geom;
+                        
+                        try {
+                            const geoJsonFeature = {
+                                type: "Feature",
+                                geometry: typeof geom === 'string' ? JSON.parse(geom) : geom,
+                                properties: feature
+                            };
+                            
+                            // Configurar estilo según el tipo de capa
+                            let style = {
+                                color: color,
+                                weight: 2,
+                                opacity: 0.8,
+                                fillOpacity: 0.3
+                            };
+                            
+                            // Estilo especial para Parroquias de la MBS
+                            if (config.style === 'dashed-no-fill') {
+                                style = {
+                                    color: color,
+                                    weight: 2,
+                                    opacity: 0.8,
+                                    fillOpacity: 0,
+                                    dashArray: '5, 5'
+                                };
+                            }
+                            
+                            const leafletFeature = L.geoJSON(geoJsonFeature, {
+                                style: style,
+                                pointToLayer: function(feature, latlng) {
+                                    return L.circleMarker(latlng, {
+                                        radius: 8,
+                                        fillColor: color,
+                                        color: color,
+                                        weight: 2,
+                                        opacity: 1,
+                                        fillOpacity: 0.8
+                                    });
+                                }
+                            });
+                            
+                            // Agregar popup
+                            leafletFeature.bindPopup(createPopupContent(feature, tableName));
+                            
+                            layerGroup.addLayer(leafletFeature);
+                            
+                        } catch (geomError) {
+                            console.warn(`Error procesando geometría en ${tableName}:`, geomError);
+                        }
+                    }
+                });
+                
+                layers[tableName] = layerGroup;
+                map.addLayer(layerGroup);
+                
+            } catch (error) {
+                console.error(`Error cargando capa ${tableName}:`, error);
+                alert(`Error al cargar la capa ${tableName}: ${error.message}`);
+            }
+        }
+        
+        // Remover capa
+        function removeLayer(tableName) {
+            if (layers[tableName]) {
+                map.removeLayer(layers[tableName]);
+                delete layers[tableName];
+            }
+        }
+        
+        // Crear contenido del popup
+        function createPopupContent(feature, tableName) {
+            const config = LAYER_CONFIG[tableName] || { name: tableName };
+            
+            let content = `<div class="popup-header">${config.name}</div>`;
+            content += '<div class="popup-content">';
+            
+            // Mostrar propiedades relevantes
+            Object.keys(feature).forEach(key => {
+                if (key !== 'geom' && key !== 'geometry' && key !== 'the_geom' && feature[key] !== null) {
+                    content += `
+                        <div class="popup-row">
+                            <div class="popup-key">${key}:</div>
+                            <div class="popup-value">${feature[key]}</div>
+                        </div>
+                    `;
+                }
+            });
+            
+            content += '</div>';
+            return content;
+        }
+        
+        // Alternar todas las capas
+        function toggleAllLayers(visible) {
+            const checkboxes = document.querySelectorAll('.layer-toggle');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = visible;
+                const tableName = checkbox.id.replace('layer-', '');
+                toggleLayer(tableName, visible);
+            });
+        }
+        
+        // Zoom a extensión
+        function zoomToExtent() {
+            const allLayers = Object.values(layers);
+            if (allLayers.length > 0) {
+                const group = L.featureGroup(allLayers);
+                map.fitBounds(group.getBounds(), { padding: [20, 20] });
+            }
+        }
+        
+        // Limpiar selección
+        function clearSelection() {
+            toggleAllLayers(false);
+        }
+        
+        // Inicializar cuando se carga la página
+        document.addEventListener('DOMContentLoaded', initMap);
+    </script>
 </body>
 </html>
