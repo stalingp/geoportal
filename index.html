@@ -129,6 +129,46 @@
             text-decoration: underline;
         }
         
+        .lab-button {
+            display: flex;
+            align-items: center;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #495057;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .lab-button:hover {
+            background: #e9ecef;
+            border-color: #3498db;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            text-decoration: none;
+        }
+        
+        .lab-button-icon {
+            font-size: 2rem;
+            margin-right: 1rem;
+            min-width: 60px;
+            text-align: center;
+        }
+        
+        .lab-button-content h3 {
+            margin: 0 0 0.5rem 0;
+            color: #2c3e50;
+            font-size: 1.1rem;
+        }
+        
+        .lab-button-content p {
+            margin: 0;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
@@ -314,7 +354,7 @@
 <body>
     <div id="header">
         <h1>🗺️ Geoportal del Laboratorio de Agua de la Mancomunidad "Bosque Seco"</h1>
-        <p>Sistema de Información Geográfica - Datos PostGIS</p>
+        <p>Sistema de Información Geográfica - Toma de muestras y resultados de análisis</p>
         <a href="#" class="about-link" onclick="openModal()">Acerca de</a>
     </div>
     
@@ -347,6 +387,33 @@
         </div>
     </div>
     
+    <!-- Modal Laboratorio -->
+    <div id="labModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeLabModal()">&times;</span>
+            <h2>🧪 Gestión de Muestras - Laboratorio de Agua</h2>
+            <p>Seleccione la opción que desea realizar:</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 1rem; margin-top: 2rem;">
+                <a href="#" onclick="openSampleForm()" class="lab-button">
+                    <div class="lab-button-icon">📋</div>
+                    <div class="lab-button-content">
+                        <h3>Registrar Toma de Muestras</h3>
+                        <p>Formulario para registrar la toma de muestras de agua en los diferentes puntos del sistema</p>
+                    </div>
+                </a>
+                
+                <a href="#" onclick="openAnalysisForm()" class="lab-button">
+                    <div class="lab-button-icon">🔬</div>
+                    <div class="lab-button-content">
+                        <h3>Registrar Análisis de Muestras</h3>
+                        <p>Formulario para registrar los resultados de los análisis de laboratorio</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+    
     <div id="container">
         <div id="sidebar">
             <div class="panel">
@@ -372,6 +439,20 @@
                 <div class="panel-content">
                     <button class="btn" onclick="zoomToExtent()">Zoom a Extensión</button>
                     <button class="btn secondary" onclick="clearSelection()">Limpiar Selección</button>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <div class="panel-header">
+                    🧪 Laboratorio de Agua
+                </div>
+                <div class="panel-content">
+                    <button class="btn" onclick="openLabModal()" style="width: 100%; margin-bottom: 0.5rem;">
+                        Gestión de Muestras
+                    </button>
+                    <button class="btn btn-secondary" onclick="openAnalysisResults()" style="width: 100%;">
+                        Ver Resultados de Análisis
+                    </button>
                 </div>
             </div>
         </div>
@@ -443,6 +524,13 @@
                 type: 'line',
                 color: '#2980b9',
                 order: 7
+            },
+            'toma_muestras': { 
+                name: 'Puntos de Toma de Muestras', 
+                description: 'Ubicaciones donde se han tomado muestras de agua', 
+                type: 'point',
+                color: '#e67e22',
+                order: 8
             }
         };
         
@@ -455,11 +543,40 @@
             document.getElementById('aboutModal').style.display = 'none';
         }
         
+        // Funciones para el modal del laboratorio
+        function openLabModal() {
+            document.getElementById('labModal').style.display = 'block';
+        }
+        
+        function closeLabModal() {
+            document.getElementById('labModal').style.display = 'none';
+        }
+        
+        function openSampleForm() {
+            // Abrir el formulario de toma de muestras en una nueva ventana
+            window.open('formulario_toma_muestras.html', '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+            closeLabModal();
+        }
+        
+        function openAnalysisForm() {
+            // Abrir el formulario de análisis en una nueva ventana
+            window.open('formulario_analisis_muestras.html', '_blank', 'width=1000,height=800,scrollbars=yes,resizable=yes');
+            closeLabModal();
+        }
+        
+        function openAnalysisResults() {
+            // Abrir la página de resultados de análisis
+            window.open('resultados_analisis.html', '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+        }
+        
         // Cerrar modal al hacer clic fuera
         window.onclick = function(event) {
-            const modal = document.getElementById('aboutModal');
-            if (event.target === modal) {
+            const aboutModal = document.getElementById('aboutModal');
+            const labModal = document.getElementById('labModal');
+            if (event.target === aboutModal) {
                 closeModal();
+            } else if (event.target === labModal) {
+                closeLabModal();
             }
         }
         
@@ -544,7 +661,8 @@
                 'parroquial_mancomunado',
                 'PTAP_cab_cantonal',
                 'PTAP_parroquias',
-                'rios_dobles'
+                'rios_dobles',
+                'toma_muestras'
             ];
             
             const validTables = [];
@@ -609,15 +727,50 @@
                 const color = config.color || layerColors[tableName];
                 
                 data.forEach(feature => {
-                    if (feature.geom || feature.geometry || feature.the_geom) {
-                        const geom = feature.geom || feature.geometry || feature.the_geom;
+                    if (feature.geom || feature.geometry || feature.the_geom || feature.coordenadas) {
+                        const geom = feature.geom || feature.geometry || feature.the_geom || feature.coordenadas;
                         
                         try {
-                            const geoJsonFeature = {
-                                type: "Feature",
-                                geometry: typeof geom === 'string' ? JSON.parse(geom) : geom,
-                                properties: feature
-                            };
+                            let geoJsonFeature;
+                            
+                            // Manejar diferentes formatos de coordenadas
+                            if (tableName === 'toma_muestras' && feature.coordenadas) {
+                                // Para toma_muestras, las coordenadas pueden estar en formato (lng,lat)
+                                let coordinates;
+                                if (typeof feature.coordenadas === 'string') {
+                                    // Formato: "(lng,lat)" o "POINT(lng lat)"
+                                    const coordsStr = feature.coordenadas.replace(/[()POINT]/g, '').trim();
+                                    const parts = coordsStr.split(/[,\s]+/).map(parseFloat);
+                                    if (parts.length >= 2) {
+                                        coordinates = [parts[0], parts[1]]; // [lng, lat]
+                                    }
+                                } else if (Array.isArray(feature.coordenadas)) {
+                                    coordinates = feature.coordenadas;
+                                }
+                                
+                                if (coordinates && coordinates.length >= 2) {
+                                    geoJsonFeature = {
+                                        type: "Feature",
+                                        geometry: {
+                                            type: "Point",
+                                            coordinates: coordinates
+                                        },
+                                        properties: feature
+                                    };
+                                }
+                            } else {
+                                // Para otras capas, usar el formato estándar
+                                geoJsonFeature = {
+                                    type: "Feature",
+                                    geometry: typeof geom === 'string' ? JSON.parse(geom) : geom,
+                                    properties: feature
+                                };
+                            }
+                            
+                            if (!geoJsonFeature) {
+                                console.warn(`No se pudo procesar geometría en ${tableName}:`, feature);
+                                return;
+                            }
                             
                             // Configurar estilo según el tipo de capa
                             let style = {
@@ -717,8 +870,23 @@
         function zoomToExtent() {
             const allLayers = Object.values(layers);
             if (allLayers.length > 0) {
-                const group = L.featureGroup(allLayers);
-                map.fitBounds(group.getBounds(), { padding: [20, 20] });
+                try {
+                    const group = L.featureGroup(allLayers);
+                    const bounds = group.getBounds();
+                    if (bounds.isValid()) {
+                        map.fitBounds(bounds, { padding: [20, 20] });
+                    } else {
+                        // Si no hay bounds válidos, usar coordenadas por defecto de Loja
+                        map.setView([-4.0, -79.2], 9);
+                    }
+                } catch (error) {
+                    console.warn('Error al hacer zoom a extensión:', error);
+                    // Fallback a coordenadas por defecto
+                    map.setView([-4.0, -79.2], 9);
+                }
+            } else {
+                // Si no hay capas cargadas, usar coordenadas por defecto
+                map.setView([-4.0, -79.2], 9);
             }
         }
         
