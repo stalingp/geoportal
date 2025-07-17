@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultados de Análisis - Laboratorio MBS</title>
+    
+    <!-- Chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f6fa;
+            color: #2c3e50;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header p {
+            opacity: 0.9;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        
+        .controls-section {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .controls-section h2 {
+            color: #2c3e50;
+            margin-bottom: 1.5rem;
+            font-size: 1.3rem;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 0.5rem;
+        }
+        
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            align-items: end;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group label {
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #34495e;
+        }
+        
+        .form-group select,
+        .form-group input {
+            padding: 0.8rem;
+            border: 2px solid #e0e6ed;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group select:focus,
+        .form-group input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+        
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #95a5a6;
+        }
+        
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        .results-section {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .results-section h2 {
+            color: #2c3e50;
+            margin-bottom: 1.5rem;
+            font-size: 1.3rem;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 0.5rem;
+        }
+        
+        .water-type-section {
+            margin-bottom: 3rem;
+        }
+        
+        .water-type-title {
+            background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-align: center;
+        }
+        
+        .water-type-title.agua-cruda {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+        
+        .water-type-title.agua-potable {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-bottom: 2rem;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #3498db;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .alert {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+        
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: #6c757d;
+        }
+        
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .compliance-indicator {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .compliance-ok {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .compliance-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .compliance-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            margin-top: 2rem;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        
+        table th,
+        table td {
+            padding: 0.8rem;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        table th {
+            background: #f8f9fa;
+            color: #495057;
+            font-weight: 600;
+        }
+        
+        table tr:hover {
+            background: #f5f5f5;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 2rem;
+            color: #6c757d;
+            font-style: italic;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                margin: 1rem auto;
+                padding: 0 0.5rem;
+            }
+            
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-container {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📊 Resultados de Análisis de Agua</h1>
+        <p>Laboratorio de Agua - Mancomunidad "Bosque Seco"</p>
+    </div>
+    
+    <div class="container">
+        <div class="controls-section">
+            <h2>🔍 Filtros de Búsqueda</h2>
+            <div id="alertContainer"></div>
+            
+            <div class="controls-grid">
+                <div class="form-group">
+                    <label for="cantonSelect">Cantón:</label>
+                    <select id="cantonSelect">
+                        <option value="">Todos los cantones</option>
+                        <option value="Celica">Celica</option>
+                        <option value="Macará">Macará</option>
+                        <option value="Paltas">Paltas</option>
+                        <option value="Pindal">Pindal</option>
+                        <option value="Puyango">Puyango</option>
+                        <option value="Zapotillo">Zapotillo</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="fechaInicio">Fecha Inicio:</label>
+                    <input type="date" id="fechaInicio">
+                </div>
+                
+                <div class="form-group">
+                    <label for="fechaFin">Fecha Fin:</label>
+                    <input type="date" id="fechaFin">
+                </div>
+                
+                <div class="form-group">
+                    <button class="btn" onclick="loadAnalysisData()">Generar Análisis</button>
+                </div>
+                
+                <div class="form-group">
+                    <button class="btn btn-secondary" onclick="exportData()">Exportar Datos</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="results-section" id="resultsSection" style="display: none;">
+            <div id="loadingIndicator" class="loading hidden">
+                <div class="loading-spinner"></div>
+                <p>Cargando datos de análisis...</p>
+            </div>
+            
+            <!-- Sección Agua Cruda -->
+            <div class="water-type-section" id="aguaCrudaSection">
+                <div class="water-type-title agua-cruda">
+                    🔴 AGUA CRUDA
+                    <div style="font-size: 0.9rem; font-weight: normal; margin-top: 0.5rem;">
+                        Incluye: Agua cruda • Ingreso de agua a la planta
+                    </div>
+                </div>
+                
+                <div class="stats-grid" id="statsGridCruda"></div>
+                
+                <div class="chart-container">
+                    <canvas id="aguaCrudaChart"></canvas>
+                </div>
+                
+                <div class="table-container" id="tableContainerCruda">
+                    <table id="aguaCrudaTable">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Código Muestra</th>
+                                <th>Cantón</th>
+                                <th>Punto de Toma</th>
+                                <th>Turbiedad (NTU)</th>
+                                <th>Coliformes (UFC)</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="aguaCrudaTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Sección Agua Potable -->
+            <div class="water-type-section" id="aguaPotableSection">
+                <div class="water-type-title agua-potable">
+                    🟢 AGUA POTABLE
+                    <div style="font-size: 0.9rem; font-weight: normal; margin-top: 0.5rem;">
+                        Incluye: Agua almacenada en la planta • Red de distribución • Punto domiciliario
+                    </div>
+                </div>
+                
+                <div class="stats-grid" id="statsGridPotable"></div>
+                
+                <div class="chart-container">
+                    <canvas id="aguaPotableChart"></canvas>
+                </div>
+                
+                <div class="table-container" id="tableContainerPotable">
+                    <table id="aguaPotableTable">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Código Muestra</th>
+                                <th>Cantón</th>
+                                <th>Punto de Toma</th>
+                                <th>Turbiedad (NTU)</th>
+                                <th>Cloro (mg/L)</th>
+                                <th>Coliformes (UFC)</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="aguaPotableTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="results-section">
+            <div style="text-align: center;">
+                <button class="btn btn-secondary" onclick="goBack()">Volver al Geoportal</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuración de Supabase
+        const SUPABASE_URL = 'https://jzlbdwuexolujlcqvkjp.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6bGJkd3VleG9sdWpsY3F2a2pwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAyOTM0NTYsImV4cCI6MjA2NTg2OTQ1Nn0.npWZOa83QXyqnWVtIIHXM7NXqeVMjeRWwoaE4k4YeA0';
+        
+        let aguaCrudaChart = null;
+        let aguaPotableChart = null;
+        let analysisData = [];
+        let aguaCrudaData = [];
+        let aguaPotableData = [];
+        
+        // Límites normativos
+        const LIMITS = {
+            turbiedad: 5,
+            cloro_min: 0.3,
+            cloro_max: 1.5,
+            coliformes: 0
+        };
+        
+        // Colores para puntos de toma
+        const PUNTO_TOMA_COLORS = {
+            'agua_cruda': '#e74c3c',
+            'ingreso_planta': '#9b59b6',
+            'agua_almacenada': '#3498db',
+            'red_distribucion': '#2ecc71',
+            'punto_domiciliario': '#f39c12'
+        };
+        
+        // Nombres legibles para puntos de toma
+        const PUNTO_TOMA_NAMES = {
+            'agua_cruda': 'Agua cruda',
+            'ingreso_planta': 'Ingreso planta',
+            'agua_almacenada': 'Agua almacenada',
+            'red_distribucion': 'Red distribución',
+            'punto_domiciliario': 'Punto domiciliario'
+        };
+        
+        // Clasificación de puntos de toma
+        const AGUA_CRUDA_POINTS = ['agua_cruda', 'ingreso_planta'];
+        const AGUA_POTABLE_POINTS = ['agua_almacenada', 'red_distribucion', 'punto_domiciliario'];
+        
+        // Cargar datos de análisis
+        async function loadAnalysisData() {
+            const canton = document.getElementById('cantonSelect').value;
+            const fechaInicio = document.getElementById('fechaInicio').value;
+            const fechaFin = document.getElementById('fechaFin').value;
+            
+            showLoading();
+            
+            try {
+                // Construir query base
+                let query = `${SUPABASE_URL}/rest/v1/analisis_muestras?select=*,toma_muestras(*)`;
+                
+                // Construir filtros solo para cantón y fechas
+                const filters = [];
+                if (canton) filters.push(`toma_muestras.cliente=eq.${canton}`);
+                if (fechaInicio) filters.push(`toma_muestras.fecha_toma=gte.${fechaInicio}`);
+                if (fechaFin) filters.push(`toma_muestras.fecha_toma=lte.${fechaFin}`);
+                
+                // Agregar filtros a la query
+                if (filters.length > 0) {
+                    query += '&' + filters.join('&');
+                }
+                
+                console.log('Query construida:', query);
+                
+                const response = await fetch(query, {
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Error HTTP: ${response.status} - ${response.statusText}`);
+                }
+                
+                const rawData = await response.json();
+                console.log('Datos recibidos:', rawData);
+                
+                // Filtrar datos que tengan toma_muestras válida
+                analysisData = rawData.filter(item => item.toma_muestras && item.toma_muestras.punto_toma);
+                
+                if (analysisData.length === 0) {
+                    showAlert('No se encontraron análisis con los filtros seleccionados', 'warning');
+                    hideLoading();
+                    return;
+                }
+                
+                // Separar datos por tipo de agua
+                separateWaterTypes();
+                
+                // Procesar y mostrar datos
+                processAndDisplayData();
+                hideLoading();
+                
+            } catch (error) {
+                console.error('Error completo:', error);
+                showAlert('Error al cargar los datos: ' + error.message, 'error');
+                hideLoading();
+            }
+        }
+        
+        // Separar datos por tipo de agua
+        function separateWaterTypes() {
+            aguaCrudaData = analysisData.filter(item => 
+                AGUA_CRUDA_POINTS.includes(item.toma_muestras.punto_toma)
+            );
+            
+            aguaPotableData = analysisData.filter(item => 
+                AGUA_POTABLE_POINTS.includes(item.toma_muestras.punto_toma)
+            );
+        }
+        
+        // Procesar y mostrar datos
+        function processAndDisplayData() {
+            document.getElementById('resultsSection').style.display = 'block';
+            
+            // Generar estadísticas para agua cruda
+            generateStats('cruda', aguaCrudaData);
+            
+            // Generar estadísticas para agua potable
+            generateStats('potable', aguaPotableData);
+            
+            // Generar gráficos
+            generateChart('cruda', aguaCrudaData);
+            generateChart('potable', aguaPotableData);
+            
+            // Generar tablas
+            generateTable('cruda', aguaCrudaData);
+            generateTable('potable', aguaPotableData);
+        }
+        
+        // Generar estadísticas
+        function generateStats(tipo, data) {
+            const statsGrid = document.getElementById(`statsGrid${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`);
+            
+            if (data.length === 0) {
+                statsGrid.innerHTML = '<div class="no-data">No hay datos disponibles para este tipo de agua</div>';
+                return;
+            }
+            
+            const totalMuestras = data.length;
+            const turbiedadOK = data.filter(a => a.turbiedad <= LIMITS.turbiedad).length;
+            const coliformesOK = data.filter(a => a.coliformes_fecales === LIMITS.coliformes).length;
+            
+            let statsHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">${totalMuestras}</div>
+                    <div class="stat-label">Total Análisis</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${((turbiedadOK/totalMuestras)*100).toFixed(1)}%</div>
+                    <div class="stat-label">Turbiedad OK</div>
+                </div>
+            `;
+            
+            // Solo mostrar estadísticas de cloro para agua potable
+            if (tipo === 'potable') {
+                const cloroOK = data.filter(a => a.cloro === null || (a.cloro >= LIMITS.cloro_min && a.cloro <= LIMITS.cloro_max)).length;
+                statsHTML += `
+                    <div class="stat-card">
+                        <div class="stat-number">${((cloroOK/totalMuestras)*100).toFixed(1)}%</div>
+                        <div class="stat-label">Cloro OK</div>
+                    </div>
+                `;
+            }
+            
+            statsHTML += `
+                <div class="stat-card">
+                    <div class="stat-number">${((coliformesOK/totalMuestras)*100).toFixed(1)}%</div>
+                    <div class="stat-label">Coliformes OK</div>
+                </div>
+            `;
+            
+            // Calcular cumplimiento general según el tipo de agua
+            let cumplimientoGeneral;
+            if (tipo === 'cruda') {
+                // Para agua cruda: solo turbiedad y coliformes
+                cumplimientoGeneral = data.filter(a => 
+                    a.turbiedad <= LIMITS.turbiedad && 
+                    a.coliformes_fecales === LIMITS.coliformes
+                ).length;
+            } else {
+                // Para agua potable: turbiedad, cloro y coliformes
+                cumplimientoGeneral = data.filter(a => 
+                    a.turbiedad <= LIMITS.turbiedad && 
+                    (a.cloro === null || (a.cloro >= LIMITS.cloro_min && a.cloro <= LIMITS.cloro_max)) &&
+                    a.coliformes_fecales === LIMITS.coliformes
+                ).length;
+            }
+            
+            statsHTML += `
+                <div class="stat-card">
+                    <div class="stat-number">${((cumplimientoGeneral/totalMuestras)*100).toFixed(1)}%</div>
+                    <div class="stat-label">Cumplimiento General</div>
+                </div>
+            `;
+            
+            statsGrid.innerHTML = statsHTML;
+        }
+        
+        // Generar gráfico
+        function generateChart(tipo, data) {
+            const chartId = tipo === 'cruda' ? 'aguaCrudaChart' : 'aguaPotableChart';
+            const ctx = document.getElementById(chartId).getContext('2d');
+            
+            // Destruir gráfico anterior si existe
+            if (tipo === 'cruda' && aguaCrudaChart) {
+                aguaCrudaChart.destroy();
+            } else if (tipo === 'potable' && aguaPotableChart) {
+                aguaPotableChart.destroy();
+            }
+            
+            if (data.length === 0) {
+                // Mostrar mensaje de no datos
+                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                ctx.fillStyle = '#6c757d';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('No hay datos disponibles para mostrar', ctx.canvas.width / 2, ctx.canvas.height / 2);
+                return;
+            }
+            
+            // Preparar datos por punto de toma
+            const datasets = [];
+            const labels = data.map((item, index) => index + 1);
+            
+            // Agrupar por punto de toma
+            const puntosToma = [...new Set(data.map(a => a.toma_muestras.punto_toma))];
+            
+            puntosToma.forEach(punto => {
+                // Turbiedad
+                datasets.push({
+                    label: `Turbiedad - ${PUNTO_TOMA_NAMES[punto] || punto}`,
+                    data: data.map(a => a.toma_muestras.punto_toma === punto ? a.turbiedad : null),
+                    borderColor: PUNTO_TOMA_COLORS[punto] || '#999',
+                    backgroundColor: (PUNTO_TOMA_COLORS[punto] || '#999') + '20',
+                    fill: false,
+                    tension: 0.1,
+                    pointRadius: 4,
+                    spanGaps: false
+                });
+                
+                // Cloro (solo si tiene datos)
+                const cloroData = data.map(a => 
+                    (a.toma_muestras.punto_toma === punto && a.cloro !== null) ? a.cloro : null
+                );
+                
+                if (cloroData.some(d => d !== null)) {
+                    datasets.push({
+                        label: `Cloro - ${PUNTO_TOMA_NAMES[punto] || punto}`,
+                        data: cloroData,
+                        borderColor: (PUNTO_TOMA_COLORS[punto] || '#999'),
+                        backgroundColor: (PUNTO_TOMA_COLORS[punto] || '#999') + '30',
+                        fill: false,
+                        tension: 0.1,
+                        pointRadius: 3,
+                        borderDash: [5, 5],
+                        spanGaps: false
+                    });
+                }
+                
+                // Coliformes
+                datasets.push({
+                    label: `Coliformes - ${PUNTO_TOMA_NAMES[punto] || punto}`,
+                    data: data.map(a => a.toma_muestras.punto_toma === punto ? a.coliformes_fecales : null),
+                    borderColor: (PUNTO_TOMA_COLORS[punto] || '#999'),
+                    backgroundColor: (PUNTO_TOMA_COLORS[punto] || '#999') + '10',
+                    fill: false,
+                    tension: 0.1,
+                    pointRadius: 2,
+                    borderDash: [2, 2],
+                    spanGaps: false
+                });
+            });
+            
+            const chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `Análisis de parámetros - ${tipo === 'cruda' ? 'Agua Cruda' : 'Agua Potable'}`
+                        },
+                        legend: {
+                            display: true,
+                            position: 'bottom'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Valores'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Número de Muestra'
+                            }
+                        }
+                    },
+                    elements: {
+                        point: {
+                            hoverRadius: 8
+                        }
+                    }
+                }
+            });
+            
+            // Guardar referencia del gráfico
+            if (tipo === 'cruda') {
+                aguaCrudaChart = chart;
+            } else {
+                aguaPotableChart = chart;
+            }
+        }
+        
+        // Generar tabla
+        function generateTable(tipo, data) {
+            const tableBody = document.getElementById(`agua${tipo.charAt(0).toUpperCase() + tipo.slice(1)}TableBody`);
+            
+            if (data.length === 0) {
+                const colspanCount = tipo === 'cruda' ? 7 : 8;
+                tableBody.innerHTML = `<tr><td colspan="${colspanCount}" class="no-data">No hay datos disponibles para este tipo de agua</td></tr>`;
+                return;
+            }
+            
+            tableBody.innerHTML = data.map(analysis => {
+                const muestra = analysis.toma_muestras;
+                const fecha = new Date(muestra.fecha_toma).toLocaleDateString('es-EC');
+                
+                // Determinar estado de cumplimiento según tipo de agua
+                const turbiedadOK = analysis.turbiedad <= LIMITS.turbiedad;
+                const coliformesOK = analysis.coliformes_fecales === LIMITS.coliformes;
+                
+                let estadoClass, estadoText;
+                
+                if (tipo === 'cruda') {
+                    // Para agua cruda: solo evaluar turbiedad y coliformes
+                    if (turbiedadOK && coliformesOK) {
+                        estadoClass = 'compliance-ok';
+                        estadoText = 'Cumple';
+                    } else {
+                        estadoClass = 'compliance-error';
+                        estadoText = 'No Cumple';
+                    }
+                    
+                    return `
+                        <tr>
+                            <td>${fecha}</td>
+                            <td>${muestra.codigo_muestra}</td>
+                            <td>${muestra.cliente}</td>
+                            <td>${PUNTO_TOMA_NAMES[muestra.punto_toma] || muestra.punto_toma}</td>
+                            <td>${analysis.turbiedad} ${turbiedadOK ? '✓' : '⚠'}</td>
+                            <td>${analysis.coliformes_fecales} ${coliformesOK ? '✓' : '⚠'}</td>
+                            <td><span class="compliance-indicator ${estadoClass}">${estadoText}</span></td>
+                        </tr>
+                    `;
+                } else {
+                    // Para agua potable: evaluar turbiedad, cloro y coliformes
+                    const cloroOK = analysis.cloro === null || (analysis.cloro >= LIMITS.cloro_min && analysis.cloro <= LIMITS.cloro_max);
+                    
+                    if (turbiedadOK && cloroOK && coliformesOK) {
+                        estadoClass = 'compliance-ok';
+                        estadoText = 'Cumple';
+                    } else if (!turbiedadOK || !coliformesOK) {
+                        estadoClass = 'compliance-error';
+                        estadoText = 'No Cumple';
+                    } else {
+                        estadoClass = 'compliance-warning';
+                        estadoText = 'Advertencia';
+                    }
+                    
+                    return `
+                        <tr>
+                            <td>${fecha}</td>
+                            <td>${muestra.codigo_muestra}</td>
+                            <td>${muestra.cliente}</td>
+                            <td>${PUNTO_TOMA_NAMES[muestra.punto_toma] || muestra.punto_toma}</td>
+                            <td>${analysis.turbiedad} ${turbiedadOK ? '✓' : '⚠'}</td>
+                            <td>${analysis.cloro !== null ? analysis.cloro + (cloroOK ? ' ✓' : ' ⚠') : 'N/A'}</td>
+                            <td>${analysis.coliformes_fecales} ${coliformesOK ? '✓' : '⚠'}</td>
+                            <td><span class="compliance-indicator ${estadoClass}">${estadoText}</span></td>
+                        </tr>
+                    `;
+                }
+            }).join('');
+        }
+        
+        // Mostrar alerta
+        function showAlert(message, type = 'info') {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertClass = `alert-${type}`;
+            
+            alertContainer.innerHTML = `
+                <div class="alert ${alertClass}">
+                    ${message}
+                </div>
+            `;
+            
+            setTimeout(() => {
+                alertContainer.innerHTML = '';
+            }, 5000);
+        }
+        
+        // Mostrar indicador de carga
+        function showLoading() {
+            document.getElementById('loadingIndicator').classList.remove('hidden');
+        }
+        
+        // Ocultar indicador de carga
+        function hideLoading() {
+            document.getElementById('loadingIndicator').classList.add('hidden');
+        }
+        
+        // Exportar datos
+        function exportData() {
+            if (analysisData.length === 0) {
+                showAlert('No hay datos para exportar', 'warning');
+                return;
+            }
+            
+            // Preparar datos para exportar - separados por tipo
+            const csvDataCruda = aguaCrudaData.map(analysis => {
+                const muestra = analysis.toma_muestras;
+                return {
+                    'Tipo de Agua': 'Agua Cruda',
+                    'Fecha': new Date(muestra.fecha_toma).toLocaleDateString('es-EC'),
+                    'Código Muestra': muestra.codigo_muestra,
+                    'Cantón': muestra.cliente,
+                    'Punto de Toma': PUNTO_TOMA_NAMES[muestra.punto_toma] || muestra.punto_toma,
+                    'Técnico': muestra.tecnico,
+                    'Laboratorista': analysis.laboratorista,
+                    'Turbiedad (NTU)': analysis.turbiedad,
+                    'Cloro (mg/L)': analysis.cloro || 'N/A',
+                    'Coliformes Fecales (UFC)': analysis.coliformes_fecales,
+                    'Sector': muestra.sector,
+                    'Referencia': muestra.referencia
+                };
+            });
+            
+            const csvDataPotable = aguaPotableData.map(analysis => {
+                const muestra = analysis.toma_muestras;
+                return {
+                    'Tipo de Agua': 'Agua Potable',
+                    'Fecha': new Date(muestra.fecha_toma).toLocaleDateString('es-EC'),
+                    'Código Muestra': muestra.codigo_muestra,
+                    'Cantón': muestra.cliente,
+                    'Punto de Toma': PUNTO_TOMA_NAMES[muestra.punto_toma] || muestra.punto_toma,
+                    'Técnico': muestra.tecnico,
+                    'Laboratorista': analysis.laboratorista,
+                    'Turbiedad (NTU)': analysis.turbiedad,
+                    'Cloro (mg/L)': analysis.cloro || 'N/A',
+                    'Coliformes Fecales (UFC)': analysis.coliformes_fecales,
+                    'Sector': muestra.sector,
+                    'Referencia': muestra.referencia
+                };
+            });
+            
+            // Combinar ambos datasets
+            const allData = [...csvDataCruda, ...csvDataPotable];
+            
+            // Convertir a CSV
+            const csvContent = convertToCSV(allData);
+            
+            // Descargar archivo
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `analisis_agua_separado_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+            
+            showAlert('Datos exportados exitosamente', 'info');
+        }
+        
+        // Convertir datos a CSV
+        function convertToCSV(data) {
+            if (data.length === 0) return '';
+            
+            const headers = Object.keys(data[0]);
+            const csvHeaders = headers.join(',');
+            
+            const csvRows = data.map(row => 
+                headers.map(header => {
+                    const value = row[header];
+                    return typeof value === 'string' && value.includes(',') ? `"${value}"` : value;
+                }).join(',')
+            );
+            
+            return [csvHeaders, ...csvRows].join('\n');
+        }
+        
+        // Volver al geoportal
+        function goBack() {
+            window.close();
+        }
+        
+        // Establecer fechas por defecto
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date();
+            const thirtyDaysAgo = new Date(today);
+            thirtyDaysAgo.setDate(today.getDate() - 30);
+            
+            document.getElementById('fechaInicio').value = thirtyDaysAgo.toISOString().split('T')[0];
+            document.getElementById('fechaFin').value = today.toISOString().split('T')[0];
+            
+            // Cargar datos automáticamente
+            loadAnalysisData();
+        });
+    </script>
+</body>
+</html>

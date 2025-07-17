@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulario de Análisis de Muestras - Laboratorio MBS</title>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f6fa;
+            color: #2c3e50;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header p {
+            opacity: 0.9;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        
+        .form-section {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        
+        .form-section h2 {
+            color: #2c3e50;
+            margin-bottom: 1.5rem;
+            font-size: 1.3rem;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #34495e;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #e0e6ed;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        .form-row-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        .required {
+            color: #e74c3c;
+        }
+        
+        .sample-info {
+            background: #e8f4fd;
+            border: 1px solid #bee5eb;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .sample-info h3 {
+            color: #0c5460;
+            margin-bottom: 0.5rem;
+        }
+        
+        .sample-detail {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .sample-detail-item {
+            background: white;
+            padding: 0.5rem;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .sample-detail-label {
+            font-weight: bold;
+            color: #495057;
+        }
+        
+        .sample-detail-value {
+            color: #6c757d;
+        }
+        
+        .parameter-group {
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            background: #fafbfc;
+        }
+        
+        .parameter-group h3 {
+            color: #495057;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .parameter-help {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 0.8rem;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: #856404;
+        }
+        
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #95a5a6;
+        }
+        
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        .btn-success {
+            background: #27ae60;
+        }
+        
+        .btn-success:hover {
+            background: #229954;
+        }
+        
+        .btn-warning {
+            background: #f39c12;
+        }
+        
+        .btn-warning:hover {
+            background: #e67e22;
+        }
+        
+        .form-actions {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e0e6ed;
+        }
+        
+        .form-actions .btn {
+            margin: 0 0.5rem;
+        }
+        
+        .alert {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #6c757d;
+        }
+        
+        .validation-message {
+            font-size: 0.8rem;
+            margin-top: 0.3rem;
+            padding: 0.3rem 0.5rem;
+            border-radius: 3px;
+        }
+        
+        .validation-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .validation-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .validation-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .ensayo-input {
+            font-family: monospace;
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                margin: 1rem auto;
+                padding: 0 0.5rem;
+            }
+            
+            .form-row,
+            .form-row-3 {
+                grid-template-columns: 1fr;
+            }
+            
+            .sample-detail {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔬 Formulario de Análisis de Muestras</h1>
+        <p>Laboratorio de Agua - Mancomunidad "Bosque Seco"</p>
+    </div>
+    
+    <div class="container">
+        <div class="form-section">
+            <h2>🧪 Selección de Muestra</h2>
+            
+            <div id="alertContainer"></div>
+            
+            <div class="form-group">
+                <label for="codigoMuestra">Código de Muestra <span class="required">*</span></label>
+                <select id="codigoMuestra" name="codigoMuestra" required onchange="loadSampleInfo()">
+                    <option value="">Seleccione una muestra</option>
+                </select>
+                <div class="parameter-help">
+                    Solo se muestran muestras que aún no tienen análisis registrados
+                </div>
+            </div>
+            
+            <div id="sampleInfo" class="sample-info hidden">
+                <h3>📋 Información de la Muestra</h3>
+                <div id="sampleDetails" class="sample-detail"></div>
+            </div>
+        </div>
+        
+        <div class="form-section" id="analysisSection" style="display: none;">
+            <h2>🔬 Parámetros de Análisis</h2>
+            
+            <form id="analysisForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="ensayo">Número de Ensayo <span class="required">*</span></label>
+                        <input type="text" id="ensayo" name="ensayo" class="ensayo-input" placeholder="Ej: 2025-001" required pattern="[0-9]{4}-[0-9]{3}">
+                        <div id="ensayoValidation" class="validation-message hidden"></div>
+                        <div class="parameter-help">
+                            <strong>Formato requerido:</strong> YYYY-NNN (Ej: 2025-001, 2025-045)
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="laboratorista">Laboratorista <span class="required">*</span></label>
+                        <input type="text" id="laboratorista" name="laboratorista" placeholder="Ej: José Pérez" required>
+                    </div>
+                </div>
+                
+                <div class="parameter-group">
+                    <h3>💧 Turbiedad</h3>
+                    <div class="form-group">
+                        <label for="turbiedad">Turbiedad (NTU) <span class="required">*</span></label>
+                        <input type="number" id="turbiedad" name="turbiedad" step="0.01" min="0" placeholder="Ej: 0.97" required onchange="validateTurbiedad()">
+                        <div id="turbiedadValidation" class="validation-message hidden"></div>
+                        <div class="parameter-help">
+                            <strong>Límite máximo:</strong> 5 NTU (Unidades Nefelométricas de Turbidez)
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="parameter-group" id="cloroGroup">
+                    <h3>🧪 Cloro Residual</h3>
+                    <div class="form-group">
+                        <label for="cloro">Cloro (mg/L) <span id="cloroRequired" class="required">*</span></label>
+                        <input type="number" id="cloro" name="cloro" step="0.1" min="0" placeholder="Ej: 1.1" onchange="validateCloro()">
+                        <div id="cloroValidation" class="validation-message hidden"></div>
+                        <div class="parameter-help">
+                            <strong>Rango aceptable:</strong> 0.3 - 1.5 mg/L<br>
+                            <strong>Nota:</strong> No aplica para agua cruda
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="parameter-group">
+                    <h3>🦠 Coliformes Fecales</h3>
+                    <div class="form-group">
+                        <label for="coliformesFecales">Coliformes Fecales (UFC) <span class="required">*</span></label>
+                        <input type="number" id="coliformesFecales" name="coliformesFecales" min="0" step="1" placeholder="Ej: 0" required onchange="validateColiformes()">
+                        <div id="coliformesValidation" class="validation-message hidden"></div>
+                        <div class="parameter-help">
+                            <strong>Límite máximo:</strong> 0 UFC (Unidades Formadoras de Colonias)<br>
+                            <strong>Resultado esperado:</strong> No debe detectarse presencia
+                        </div>
+                    </div>
+                </div>
+            </form>
+            
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="resetForm()">Limpiar Formulario</button>
+                <button type="button" class="btn btn-warning" onclick="previewResults()">Vista Previa</button>
+                <button type="button" class="btn btn-success" onclick="submitAnalysis()">Guardar Análisis</button>
+                <button type="button" class="btn btn-secondary" onclick="goBack()">Volver al Geoportal</button>
+            </div>
+        </div>
+        
+        <!-- Modal de Vista Previa -->
+        <div id="previewModal" class="modal hidden">
+            <div class="modal-content">
+                <span class="close" onclick="closePreview()">&times;</span>
+                <h2>📊 Vista Previa del Análisis</h2>
+                <div id="previewContent"></div>
+                <div style="text-align: center; margin-top: 2rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closePreview()">Cerrar</button>
+                    <button type="button" class="btn btn-success" onclick="confirmSubmit()">Confirmar y Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .modal {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 2rem;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s ease;
+        }
+        
+        .close {
+            position: absolute;
+            top: 1rem;
+            right: 1.5rem;
+            font-size: 2rem;
+            font-weight: bold;
+            cursor: pointer;
+            color: #999;
+            transition: color 0.3s ease;
+        }
+        
+        .close:hover {
+            color: #333;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .preview-section {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            background: #f8f9fa;
+        }
+        
+        .preview-section h3 {
+            color: #495057;
+            margin-bottom: 0.5rem;
+        }
+        
+        .preview-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 0.3rem 0;
+            padding: 0.3rem 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .preview-label {
+            font-weight: bold;
+            color: #495057;
+        }
+        
+        .preview-value {
+            color: #6c757d;
+        }
+        
+        .status-compliant {
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        .status-warning {
+            color: #ffc107;
+            font-weight: bold;
+        }
+        
+        .status-non-compliant {
+            color: #dc3545;
+            font-weight: bold;
+        }
+    </style>
+
+    <script>
+        const SUPABASE_URL = 'https://jzlbdwuexolujlcqvkjp.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6bGJkd3VleG9sdWpsY3F2a2pwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAyOTM0NTYsImV4cCI6MjA2NTg2OTQ1Nn0.npWZOa83QXyqnWVtIIHXM7NXqeVMjeRWwoaE4k4YeA0';
+        
+        let selectedSample = null;
+        let availableSamples = [];
+        
+        async function loadAvailableSamples() {
+            try {
+                const samplesResponse = await fetch(SUPABASE_URL + '/rest/v1/toma_muestras?select=*', {
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': 'Bearer ' + SUPABASE_KEY
+                    }
+                });
+                
+                const analysisResponse = await fetch(SUPABASE_URL + '/rest/v1/analisis_muestras?select=codigo_muestra', {
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': 'Bearer ' + SUPABASE_KEY
+                    }
+                });
+                
+                if (samplesResponse.ok && analysisResponse.ok) {
+                    const allSamples = await samplesResponse.json();
+                    const existingAnalysis = await analysisResponse.json();
+                    
+                    const analyzedCodes = existingAnalysis.map(function(a) { return a.codigo_muestra; });
+                    availableSamples = allSamples.filter(function(sample) {
+                        return !analyzedCodes.includes(sample.codigo_muestra);
+                    });
+                    
+                    updateSampleSelect();
+                } else {
+                    showAlert('Error al cargar las muestras disponibles', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Error al conectar con la base de datos', 'error');
+            }
+        }
+        
+        function updateSampleSelect() {
+            const select = document.getElementById('codigoMuestra');
+            select.innerHTML = '<option value="">Seleccione una muestra</option>';
+            
+            if (availableSamples.length === 0) {
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = 'No hay muestras disponibles para análisis';
+                option.disabled = true;
+                select.appendChild(option);
+                return;
+            }
+            
+            availableSamples.forEach(function(sample) {
+                const option = document.createElement('option');
+                option.value = sample.codigo_muestra;
+                option.textContent = sample.codigo_muestra + ' - ' + sample.cliente + ' (' + sample.tipo_agua + ')';
+                select.appendChild(option);
+            });
+        }
+        
+        function loadSampleInfo() {
+            const codigoMuestra = document.getElementById('codigoMuestra').value;
+            const sampleInfo = document.getElementById('sampleInfo');
+            const analysisSection = document.getElementById('analysisSection');
+            
+            if (!codigoMuestra) {
+                sampleInfo.classList.add('hidden');
+                analysisSection.style.display = 'none';
+                return;
+            }
+            
+            selectedSample = availableSamples.find(function(s) { return s.codigo_muestra === codigoMuestra; });
+            
+            if (selectedSample) {
+                displaySampleInfo(selectedSample);
+                sampleInfo.classList.remove('hidden');
+                analysisSection.style.display = 'block';
+                configureCloroField(selectedSample.tipo_agua);
+                generateEnsayoSuggestion();
+            }
+        }
+        
+        async function generateEnsayoSuggestion() {
+            try {
+                const currentYear = new Date().getFullYear();
+                const response = await fetch(SUPABASE_URL + '/rest/v1/analisis_muestras?select=ensayo&ensayo=like.' + currentYear + '*&order=ensayo.desc&limit=1', {
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': 'Bearer ' + SUPABASE_KEY
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    let nextNumber = 1;
+                    
+                    if (data.length > 0) {
+                        const lastEnsayo = data[0].ensayo;
+                        const lastNumber = parseInt(lastEnsayo.split('-')[1]);
+                        nextNumber = lastNumber + 1;
+                    }
+                    
+                    const suggestedEnsayo = currentYear + '-' + String(nextNumber).padStart(3, '0');
+                    document.getElementById('ensayo').value = suggestedEnsayo;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+        
+        function displaySampleInfo(sample) {
+            const sampleDetails = document.getElementById('sampleDetails');
+            const fecha = new Date(sample.fecha_toma).toLocaleDateString('es-EC');
+            
+            sampleDetails.innerHTML = '<div class="sample-detail-item"><div class="sample-detail-label">Código:</div><div class="sample-detail-value">' + sample.codigo_muestra + '</div></div>' +
+                '<div class="sample-detail-item"><div class="sample-detail-label">Cliente:</div><div class="sample-detail-value">' + sample.cliente + '</div></div>' +
+                '<div class="sample-detail-item"><div class="sample-detail-label">Tipo de Agua:</div><div class="sample-detail-value">' + sample.tipo_agua + '</div></div>' +
+                '<div class="sample-detail-item"><div class="sample-detail-label">Técnico:</div><div class="sample-detail-value">' + sample.tecnico + '</div></div>' +
+                '<div class="sample-detail-item"><div class="sample-detail-label">Fecha:</div><div class="sample-detail-value">' + fecha + '</div></div>' +
+                '<div class="sample-detail-item"><div class="sample-detail-label">Hora:</div><div class="sample-detail-value">' + sample.hora_toma + '</div></div>' +
+                '<div class="sample-detail-item"><div class="sample-detail-label">Sector:</div><div class="sample-detail-value">' + sample.sector + '</div></div>' +
+                '<div class="sample-detail-item" style="grid-column: 1 / -1;"><div class="sample-detail-label">Referencia:</div><div class="sample-detail-value">' + sample.referencia + '</div></div>';
+        }
+        
+        function configureCloroField(tipoAgua) {
+            const cloroGroup = document.getElementById('cloroGroup');
+            const cloroInput = document.getElementById('cloro');
+            const cloroRequired = document.getElementById('cloroRequired');
+            
+            if (tipoAgua === 'cruda') {
+                cloroGroup.style.opacity = '0.5';
+                cloroInput.disabled = true;
+                cloroInput.required = false;
+                cloroInput.value = '';
+                cloroRequired.style.display = 'none';
+            } else {
+                cloroGroup.style.opacity = '1';
+                cloroInput.disabled = false;
+                cloroInput.required = true;
+                cloroRequired.style.display = 'inline';
+            }
+        }
+        
+        function validateTurbiedad() {
+            const input = document.getElementById('turbiedad');
+            const validation = document.getElementById('turbiedadValidation');
+            const value = parseFloat(input.value);
+            
+            if (isNaN(value)) {
+                validation.classList.add('hidden');
+                return;
+            }
+            
+            validation.classList.remove('hidden');
+            
+            if (value <= 5) {
+                validation.className = 'validation-message validation-success';
+                validation.textContent = '✓ Dentro del límite permitido (≤ 5 NTU)';
+            } else {
+                validation.className = 'validation-message validation-error';
+                validation.textContent = '⚠ Excede el límite permitido (> 5 NTU)';
+            }
+        }
+        
+        function validateCloro() {
+            const input = document.getElementById('cloro');
+            const validation = document.getElementById('cloroValidation');
+            const value = parseFloat(input.value);
+            
+            if (input.disabled || isNaN(value)) {
+                validation.classList.add('hidden');
+                return;
+            }
+            
+            validation.classList.remove('hidden');
+            
+            if (value >= 0.3 && value <= 1.5) {
+                validation.className = 'validation-message validation-success';
+                validation.textContent = '✓ Dentro del rango aceptable (0.3 - 1.5 mg/L)';
+            } else if (value < 0.3) {
+                validation.className = 'validation-message validation-warning';
+                validation.textContent = '⚠ Por debajo del mínimo recomendado (< 0.3 mg/L)';
+            } else {
+                validation.className = 'validation-message validation-warning';
+                validation.textContent = '⚠ Por encima del máximo recomendado (> 1.5 mg/L)';
+            }
+        }
+        
+        function validateColiformes() {
+            const input = document.getElementById('coliformesFecales');
+            const validation = document.getElementById('coliformesValidation');
+            const value = parseInt(input.value);
+            
+            if (isNaN(value)) {
+                validation.classList.add('hidden');
+                return;
+            }
+            
+            validation.classList.remove('hidden');
+            
+            if (value === 0) {
+                validation.className = 'validation-message validation-success';
+                validation.textContent = '✓ Sin presencia detectada (cumple norma)';
+            } else {
+                validation.className = 'validation-message validation-error';
+                validation.textContent = '⚠ Presencia detectada (no cumple norma)';
+            }
+        }
+        
+        function previewResults() {
+            const form = document.getElementById('analysisForm');
+            const formData = new FormData(form);
+            
+            if (!form.checkValidity()) {
+                showAlert('Por favor complete todos los campos requeridos', 'error');
+                return;
+            }
+            
+            const ensayo = formData.get('ensayo');
+            const turbiedad = parseFloat(formData.get('turbiedad'));
+            const cloro = selectedSample.tipo_agua === 'cruda' ? null : parseFloat(formData.get('cloro'));
+            const coliformes = parseInt(formData.get('coliformesFecales'));
+            
+            const previewContent = document.getElementById('previewContent');
+            previewContent.innerHTML = '<div class="preview-section"><h3>📋 Información de la Muestra</h3>' +
+                '<div class="preview-item"><span class="preview-label">Código:</span><span class="preview-value">' + selectedSample.codigo_muestra + '</span></div>' +
+                '<div class="preview-item"><span class="preview-label">Cliente:</span><span class="preview-value">' + selectedSample.cliente + '</span></div>' +
+                '<div class="preview-item"><span class="preview-label">Tipo de Agua:</span><span class="preview-value">' + selectedSample.tipo_agua + '</span></div>' +
+                '<div class="preview-item"><span class="preview-label">Nº Ensayo:</span><span class="preview-value" style="font-family: monospace; font-weight: bold;">' + ensayo + '</span></div>' +
+                '<div class="preview-item"><span class="preview-label">Laboratorista:</span><span class="preview-value">' + formData.get('laboratorista') + '</span></div></div>' +
+                '<div class="preview-section"><h3>🔬 Resultados del Análisis</h3>' +
+                '<div class="preview-item"><span class="preview-label">Turbiedad:</span><span class="preview-value">' + turbiedad + ' NTU <span class="' + (turbiedad <= 5 ? 'status-compliant">✓ Cumple' : 'status-non-compliant">✗ No cumple') + '</span></span></div>' +
+                (cloro !== null ? '<div class="preview-item"><span class="preview-label">Cloro Residual:</span><span class="preview-value">' + cloro + ' mg/L <span class="' + (cloro >= 0.3 && cloro <= 1.5 ? 'status-compliant">✓ Óptimo' : 'status-warning">⚠ Fuera de rango') + '</span></span></div>' : '<div class="preview-item"><span class="preview-label">Cloro Residual:</span><span class="preview-value">No aplica (agua cruda)</span></div>') +
+                '<div class="preview-item"><span class="preview-label">Coliformes Fecales:</span><span class="preview-value">' + coliformes + ' UFC <span class="' + (coliformes === 0 ? 'status-compliant">✓ Cumple' : 'status-non-compliant">✗ No cumple') + '</span></span></div></div>' +
+                '<div class="preview-section"><h3>📊 Evaluación General</h3><div class="preview-item"><span class="preview-label">Estado:</span><span class="preview-value ' + getOverallStatus(turbiedad, cloro, coliformes, selectedSample.tipo_agua) + '">' + getOverallStatusText(turbiedad, cloro, coliformes, selectedSample.tipo_agua) + '</span></div></div>';
+            
+            document.getElementById('previewModal').classList.remove('hidden');
+        }
+        
+        function getOverallStatus(turbiedad, cloro, coliformes, tipoAgua) {
+            const turbiedadOK = turbiedad <= 5;
+            const cloroOK = tipoAgua === 'cruda' || (cloro >= 0.3 && cloro <= 1.5);
+            const coliformesOK = coliformes === 0;
+            
+            if (turbiedadOK && cloroOK && coliformesOK) {
+                return 'status-compliant';
+            } else if (!turbiedadOK || !coliformesOK) {
+                return 'status-non-compliant';
+            } else {
+                return 'status-warning';
+            }
+        }
+        
+        function getOverallStatusText(turbiedad, cloro, coliformes, tipoAgua) {
+            const turbiedadOK = turbiedad <= 5;
+            const cloroOK = tipoAgua === 'cruda' || (cloro >= 0.3 && cloro <= 1.5);
+            const coliformesOK = coliformes === 0;
+            
+            if (turbiedadOK && cloroOK && coliformesOK) {
+                return 'CUMPLE CON LA NORMA';
+            } else if (!turbiedadOK || !coliformesOK) {
+                return 'NO CUMPLE CON LA NORMA';
+            } else {
+                return 'REQUIERE ATENCIÓN';
+            }
+        }
+        
+        function closePreview() {
+            document.getElementById('previewModal').classList.add('hidden');
+        }
+        
+        function confirmSubmit() {
+            closePreview();
+            submitAnalysis();
+        }
+        
+        async function submitAnalysis() {
+            const form = document.getElementById('analysisForm');
+            const formData = new FormData(form);
+            
+            if (!form.checkValidity()) {
+                showAlert('Por favor complete todos los campos requeridos', 'error');
+                return;
+            }
+            
+            if (!selectedSample) {
+                showAlert('Por favor seleccione una muestra', 'error');
+                return;
+            }
+            
+            try {
+                const data = {
+                    codigo_muestra: selectedSample.codigo_muestra,
+                    ensayo: formData.get('ensayo'),
+                    laboratorista: formData.get('laboratorista'),
+                    turbiedad: parseFloat(formData.get('turbiedad')),
+                    cloro: selectedSample.tipo_agua === 'cruda' ? null : parseFloat(formData.get('cloro')),
+                    coliformes_fecales: parseInt(formData.get('coliformesFecales'))
+                };
+                
+                const response = await fetch(SUPABASE_URL + '/rest/v1/analisis_muestras', {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': 'Bearer ' + SUPABASE_KEY,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=minimal'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                if (response.ok) {
+                    showAlert('Análisis registrado exitosamente con número de ensayo: ' + data.ensayo, 'success');
+                    resetForm();
+                    await loadAvailableSamples();
+                } else {
+                    const error = await response.text();
+                    console.error('Error response:', error);
+                    showAlert('Error al registrar el análisis: ' + error, 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Error al conectar con la base de datos', 'error');
+            }
+        }
+        
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertClass = type === 'success' ? 'alert-success' : (type === 'warning' ? 'alert-warning' : 'alert-error');
+            
+            alertContainer.innerHTML = '<div class="alert ' + alertClass + '">' + message + '</div>';
+            
+            setTimeout(function() {
+                alertContainer.innerHTML = '';
+            }, 5000);
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        
+        function resetForm() {
+            document.getElementById('analysisForm').reset();
+            document.getElementById('codigoMuestra').value = '';
+            document.getElementById('sampleInfo').classList.add('hidden');
+            document.getElementById('analysisSection').style.display = 'none';
+            
+            const validations = document.querySelectorAll('.validation-message');
+            validations.forEach(function(v) { v.classList.add('hidden'); });
+            
+            selectedSample = null;
+        }
+        
+        function goBack() {
+            window.history.back();
+        }
+        
+        window.onclick = function(event) {
+            const modal = document.getElementById('previewModal');
+            if (event.target === modal) {
+                closePreview();
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAvailableSamples();
+        });
+    </script>
+</body>
+</html>

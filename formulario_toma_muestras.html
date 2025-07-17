@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulario de Toma de Muestras - Laboratorio MBS</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f6fa;
+            color: #2c3e50;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header p {
+            opacity: 0.9;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        
+        .form-section {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .form-section h2 {
+            color: #2c3e50;
+            margin-bottom: 1.5rem;
+            font-size: 1.3rem;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 0.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #34495e;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #e0e6ed;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        .required {
+            color: #e74c3c;
+        }
+        
+        .map-section {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .map-header {
+            background: #34495e;
+            color: white;
+            padding: 1rem;
+            font-weight: bold;
+        }
+        
+        #map {
+            height: 400px;
+            width: 100%;
+        }
+        
+        .coordinate-info {
+            padding: 1rem;
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .coordinate-display {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .coordinate-value {
+            font-family: 'Courier New', monospace;
+            background: #e9ecef;
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #95a5a6;
+        }
+        
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        .btn-success {
+            background: #27ae60;
+        }
+        
+        .btn-success:hover {
+            background: #229954;
+        }
+        
+        .form-actions {
+            grid-column: 1 / -1;
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e0e6ed;
+        }
+        
+        .form-actions .btn {
+            margin: 0 0.5rem;
+        }
+        
+        .alert {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .ptap-info {
+            background: #e8f4fd;
+            border: 1px solid #bee5eb;
+            border-radius: 4px;
+            padding: 0.8rem;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: #0c5460;
+        }
+        
+        .water-type-indicator {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-left: 0.5rem;
+            text-transform: uppercase;
+        }
+        
+        .water-type-cruda {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .water-type-potable {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+                margin: 1rem auto;
+                padding: 0 0.5rem;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📋 Formulario de Toma de Muestras</h1>
+        <p>Laboratorio de Agua - Mancomunidad "Bosque Seco"</p>
+    </div>
+    
+    <div class="container">
+        <div class="form-section">
+            <h2>🧪 Información de la Muestra</h2>
+            
+            <div id="alertContainer"></div>
+            
+            <form id="sampleForm">
+                <div class="form-group">
+                    <label for="cliente">Cliente <span class="required">*</span></label>
+                    <select id="cliente" name="cliente" required>
+                        <option value="">Seleccione un cliente</option>
+                        <option value="Celica">Celica</option>
+                        <option value="Macará">Macará</option>
+                        <option value="Paltas">Paltas</option>
+                        <option value="Pindal">Pindal</option>
+                        <option value="Puyango">Puyango</option>
+                        <option value="Zapotillo">Zapotillo</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="codigoMuestra">Código de Muestra <span class="required">*</span></label>
+                    <input type="text" id="codigoMuestra" name="codigoMuestra" placeholder="Ej: LAMBS-001" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="tecnico">Técnico <span class="required">*</span></label>
+                    <input type="text" id="tecnico" name="tecnico" placeholder="Ej: José Pérez" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="puntoToma">Punto de Toma de la Muestra <span class="required">*</span></label>
+                    <select id="puntoToma" name="puntoToma" required onchange="handlePuntoTomaChange()">
+                        <option value="">Seleccione punto de toma</option>
+                        <optgroup label="🔴 AGUA CRUDA">
+                            <option value="agua_cruda">Agua cruda</option>
+                            <option value="ingreso_planta">Ingreso de agua a la planta de tratamiento</option>
+                        </optgroup>
+                        <optgroup label="🟢 AGUA POTABLE">
+                            <option value="agua_almacenada">Agua almacenada en la planta de tratamiento</option>
+                            <option value="red_distribucion">Red de distribución</option>
+                            <option value="punto_domiciliario">Punto domiciliario</option>
+                        </optgroup>
+                    </select>
+                    <div id="tipoAguaIndicator" class="hidden"></div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="fechaToma">Fecha de Toma <span class="required">*</span></label>
+                        <input type="date" id="fechaToma" name="fechaToma" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="horaToma">Hora de Toma <span class="required">*</span></label>
+                        <input type="time" id="horaToma" name="horaToma" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="referencia">Referencia <span class="required">*</span></label>
+                    <textarea id="referencia" name="referencia" placeholder="Ej: Cisterna: Familia Jaramillo-Quinteros; Dirección: calle sin nombre s/n y Eloy Alfaro, Barrio Nuestra Señora del Rosario" required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="sector">Sector <span class="required">*</span></label>
+                    <select id="sector" name="sector" required>
+                        <option value="">Seleccione sector</option>
+                        <option value="Urbano">Urbano</option>
+                        <option value="Rural">Rural</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" id="ptapSection" style="display: none;">
+                    <label for="ptapSelect">Seleccionar PTAP <span class="required">*</span></label>
+                    <select id="ptapSelect" name="ptapSelect" onchange="handlePtapSelection()">
+                        <option value="">Seleccione una PTAP</option>
+                    </select>
+                    <div id="ptapInfo" class="ptap-info hidden"></div>
+                </div>
+                
+                <div class="form-group" id="coordenadasManuales" style="display: none;">
+                    <label>Selección de Coordenadas en el Mapa <span class="required">*</span></label>
+                    <div class="ptap-info">
+                        Haga clic en el mapa para seleccionar las coordenadas del punto de toma de la muestra.
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <div class="map-section">
+            <div class="map-header">
+                🗺️ Selección de Coordenadas
+            </div>
+            <div id="map"></div>
+            <div class="coordinate-info">
+                <div class="coordinate-display">
+                    <span>Coordenadas seleccionadas:</span>
+                    <div class="coordinate-value" id="coordenadas">Haga clic en el mapa</div>
+                </div>
+                <button type="button" class="btn btn-secondary" onclick="clearCoordinates()" style="margin-top: 0.5rem; padding: 0.5rem 1rem; font-size: 0.9rem;">
+                    Limpiar Coordenadas
+                </button>
+            </div>
+        </div>
+        
+        <div class="form-actions">
+            <button type="button" class="btn btn-secondary" onclick="resetForm()">Limpiar Formulario</button>
+            <button type="button" class="btn btn-success" onclick="submitForm()">Guardar Muestra</button>
+            <button type="button" class="btn btn-secondary" onclick="goBack()">Volver al Geoportal</button>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    
+    <script>
+        // Configuración de Supabase
+        const SUPABASE_URL = 'https://jzlbdwuexolujlcqvkjp.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6bGJkd3VleG9sdWpsY3F2a2pwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAyOTM0NTYsImV4cCI6MjA2NTg2OTQ1Nn0.npWZOa83QXyqnWVtIIHXM7NXqeVMjeRWwoaE4k4YeA0';
+        
+        let map;
+        let selectedMarker;
+        let selectedCoordinates = null;
+        let ptapData = [];
+        
+        // Clasificación de puntos de toma según tipo de agua
+        const AGUA_CRUDA_POINTS = ['agua_cruda', 'ingreso_planta'];
+        const AGUA_POTABLE_POINTS = ['agua_almacenada', 'red_distribucion', 'punto_domiciliario'];
+        
+        // Datos de PTAP (coordenadas de ejemplo)
+        const PTAP_COORDINATES = {
+            'PTAP Macará': { lat: -4.3833, lng: -79.9500, tipo: 'cantonal' },
+            'PTAP Paltas': { lat: -4.0333, lng: -79.6500, tipo: 'cantonal' },
+            'PTAP Pindal': { lat: -3.8500, lng: -79.7833, tipo: 'cantonal' },
+            'PTAP Puyango': { lat: -4.1000, lng: -80.0833, tipo: 'cantonal' },
+            'PTAP Zapotillo': { lat: -4.3833, lng: -80.2500, tipo: 'cantonal' },
+            'PTAP Celica': { lat: -4.1000, lng: -79.9500, tipo: 'cantonal' }
+        };
+        
+        // Inicializar mapa
+        function initMap() {
+            map = L.map('map').setView([-4.0, -79.2], 9);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+            
+            // Evento de clic en el mapa
+            map.on('click', function(e) {
+                const puntoToma = document.getElementById('puntoToma').value;
+                const necesitaCoordenadas = ['red_distribucion', 'punto_domiciliario'].includes(puntoToma);
+                
+                if (necesitaCoordenadas) {
+                    setCoordinates(e.latlng.lat, e.latlng.lng);
+                } else if (puntoToma) {
+                    showAlert('Para este tipo de punto de toma debe seleccionar una PTAP, no coordenadas manuales', 'warning');
+                } else {
+                    showAlert('Primero seleccione el punto de toma de la muestra', 'warning');
+                }
+            });
+            
+            // Cargar PTAP data
+            loadPtapData();
+        }
+        
+        // Cargar datos de PTAP
+        async function loadPtapData() {
+            try {
+                // Cargar PTAP cantonales
+                const cantonalResponse = await fetch(`${SUPABASE_URL}/rest/v1/PTAP_cab_cantonal?select=*`, {
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`
+                    }
+                });
+                
+                // Cargar PTAP parroquiales
+                const parroquialResponse = await fetch(`${SUPABASE_URL}/rest/v1/PTAP_parroquias?select=*`, {
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`
+                    }
+                });
+                
+                if (cantonalResponse.ok && parroquialResponse.ok) {
+                    const cantonalData = await cantonalResponse.json();
+                    const parroquialData = await parroquialResponse.json();
+                    
+                    // Procesar datos cantonales
+                    const cantonalProcessed = cantonalData.map(p => ({
+                        ...p,
+                        tipo: 'cantonal',
+                        nombre_display: p.canton && p.descripci ? `${p.canton} - ${p.descripci}` : 
+                                       (p.nombre || p.canton || p.descripci || 'PTAP Cantonal')
+                    }));
+                    
+                    // Procesar datos parroquiales
+                    const parroquialProcessed = parroquialData.map(p => ({
+                        ...p,
+                        tipo: 'parroquial',
+                        nombre_display: p.canton && p.planta ? `${p.canton} - ${p.planta}` : 
+                                       (p.nombre || p.canton || p.planta || 'PTAP Parroquial')
+                    }));
+                    
+                    ptapData = [...cantonalProcessed, ...parroquialProcessed];
+                    updatePtapSelect();
+                } else {
+                    console.error('Error cargando PTAP data');
+                    showAlert('Error al cargar datos de PTAP. Usando datos por defecto.', 'warning');
+                    // Usar datos de ejemplo si falla la carga
+                    ptapData = Object.entries(PTAP_COORDINATES).map(([name, coords]) => ({
+                        nombre_display: name,
+                        ...coords
+                    }));
+                    updatePtapSelect();
+                }
+            } catch (error) {
+                console.error('Error cargando PTAP:', error);
+                showAlert('Error al conectar con la base de datos de PTAP', 'error');
+                // Usar datos de ejemplo si falla la carga
+                ptapData = Object.entries(PTAP_COORDINATES).map(([name, coords]) => ({
+                    nombre_display: name,
+                    ...coords
+                }));
+                updatePtapSelect();
+            }
+        }
+        
+        // Actualizar select de PTAP
+        function updatePtapSelect() {
+            const select = document.getElementById('ptapSelect');
+            select.innerHTML = '<option value="">Seleccione una PTAP</option>';
+            
+            if (ptapData.length === 0) {
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = 'No hay PTAP disponibles';
+                option.disabled = true;
+                select.appendChild(option);
+                return;
+            }
+            
+            ptapData.forEach(ptap => {
+                const option = document.createElement('option');
+                option.value = JSON.stringify(ptap);
+                option.textContent = `${ptap.nombre_display} (${ptap.tipo || 'cantonal'})`;
+                select.appendChild(option);
+            });
+        }
+        
+        // Determinar tipo de agua según punto de toma
+        function getTipoAgua(puntoToma) {
+            if (AGUA_CRUDA_POINTS.includes(puntoToma)) {
+                return 'cruda';
+            } else if (AGUA_POTABLE_POINTS.includes(puntoToma)) {
+                return 'potable';
+            }
+            return null;
+        }
+        
+        // Mostrar indicador de tipo de agua
+        function showTipoAguaIndicator(puntoToma) {
+            const indicator = document.getElementById('tipoAguaIndicator');
+            const tipoAgua = getTipoAgua(puntoToma);
+            
+            if (tipoAgua === 'cruda') {
+                indicator.innerHTML = '<span class="water-type-indicator water-type-cruda">🔴 AGUA CRUDA</span>';
+                indicator.classList.remove('hidden');
+            } else if (tipoAgua === 'potable') {
+                indicator.innerHTML = '<span class="water-type-indicator water-type-potable">🟢 AGUA POTABLE</span>';
+                indicator.classList.remove('hidden');
+            } else {
+                indicator.classList.add('hidden');
+            }
+        }
+        
+        // Manejar cambio de punto de toma
+        function handlePuntoTomaChange() {
+            const puntoToma = document.getElementById('puntoToma').value;
+            const ptapSection = document.getElementById('ptapSection');
+            const coordenadasManuales = document.getElementById('coordenadasManuales');
+            const referencia = document.getElementById('referencia');
+            
+            // Limpiar coordenadas anteriores
+            clearCoordinates();
+            
+            // Mostrar indicador de tipo de agua
+            showTipoAguaIndicator(puntoToma);
+            
+            // Determinar si necesita PTAP o coordenadas manuales
+            const necesitaPTAP = AGUA_CRUDA_POINTS.includes(puntoToma) || puntoToma === 'agua_almacenada';
+            const necesitaCoordenadas = ['red_distribucion', 'punto_domiciliario'].includes(puntoToma);
+            
+            if (necesitaPTAP) {
+                ptapSection.style.display = 'block';
+                coordenadasManuales.style.display = 'none';
+                
+                // Actualizar placeholder de referencia
+                if (puntoToma === 'agua_cruda') {
+                    referencia.placeholder = 'Ej: Agua cruda - Captación río San Luis';
+                } else if (puntoToma === 'ingreso_planta') {
+                    referencia.placeholder = 'Ej: Ingreso planta de tratamiento - Filtro de entrada';
+                } else if (puntoToma === 'agua_almacenada') {
+                    referencia.placeholder = 'Ej: Agua almacenada - Tanque de reserva principal';
+                }
+            } else if (necesitaCoordenadas) {
+                ptapSection.style.display = 'none';
+                coordenadasManuales.style.display = 'block';
+                
+                // Actualizar placeholder de referencia
+                if (puntoToma === 'red_distribucion') {
+                    referencia.placeholder = 'Ej: Red de distribución - Barrio Centro, válvula principal';
+                } else if (puntoToma === 'punto_domiciliario') {
+                    referencia.placeholder = 'Ej: Punto domiciliario - Familia Jaramillo, calle Eloy Alfaro s/n';
+                }
+            } else {
+                ptapSection.style.display = 'none';
+                coordenadasManuales.style.display = 'none';
+                referencia.placeholder = 'Describa el punto de toma de la muestra';
+            }
+        }
+        
+        // Manejar selección de PTAP
+        function handlePtapSelection() {
+            const select = document.getElementById('ptapSelect');
+            const ptapInfo = document.getElementById('ptapInfo');
+            
+            if (select.value) {
+                const ptap = JSON.parse(select.value);
+                
+                // Extraer coordenadas del objeto PTAP
+                let lat, lng;
+                if (ptap.geom) {
+                    try {
+                        const geom = typeof ptap.geom === 'string' ? JSON.parse(ptap.geom) : ptap.geom;
+                        if (geom.coordinates) {
+                            lng = geom.coordinates[0];
+                            lat = geom.coordinates[1];
+                        }
+                    } catch (e) {
+                        console.warn('Error parsing geometry:', e);
+                    }
+                } else if (ptap.lat && ptap.lng) {
+                    lat = ptap.lat;
+                    lng = ptap.lng;
+                }
+                
+                if (lat && lng) {
+                    setCoordinates(lat, lng);
+                    ptapInfo.innerHTML = `
+                        <strong>PTAP Seleccionada:</strong> ${ptap.nombre_display}<br>
+                        <strong>Tipo:</strong> ${ptap.tipo || 'cantonal'}<br>
+                        <strong>Coordenadas:</strong> ${lat.toFixed(6)}, ${lng.toFixed(6)}
+                    `;
+                    ptapInfo.classList.remove('hidden');
+                } else {
+                    showAlert('No se pudieron obtener las coordenadas de la PTAP seleccionada. Verifique los datos.', 'warning');
+                    ptapInfo.innerHTML = `
+                        <strong>PTAP Seleccionada:</strong> ${ptap.nombre_display}<br>
+                        <strong>Tipo:</strong> ${ptap.tipo || 'cantonal'}<br>
+                        <strong>Estado:</strong> <span style="color: #e74c3c;">Coordenadas no disponibles</span>
+                    `;
+                    ptapInfo.classList.remove('hidden');
+                }
+            } else {
+                ptapInfo.classList.add('hidden');
+                clearCoordinates();
+            }
+        }
+        
+        // Establecer coordenadas
+        function setCoordinates(lat, lng) {
+            selectedCoordinates = { lat, lng };
+            
+            // Remover marcador anterior
+            if (selectedMarker) {
+                map.removeLayer(selectedMarker);
+            }
+            
+            // Agregar nuevo marcador
+            selectedMarker = L.marker([lat, lng], {
+                icon: L.icon({
+                    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+                    shadowSize: [41, 41]
+                })
+            }).addTo(map);
+            
+            // Actualizar display
+            document.getElementById('coordenadas').textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+            
+            // Centrar mapa en las coordenadas
+            map.setView([lat, lng], Math.max(map.getZoom(), 12));
+        }
+        
+        // Limpiar coordenadas
+        function clearCoordinates() {
+            selectedCoordinates = null;
+            if (selectedMarker) {
+                map.removeLayer(selectedMarker);
+                selectedMarker = null;
+            }
+            document.getElementById('coordenadas').textContent = 'Haga clic en el mapa';
+            document.getElementById('ptapInfo').classList.add('hidden');
+        }
+        
+        // Mostrar alertas
+        function showAlert(message, type = 'success') {
+            const alertContainer = document.getElementById('alertContainer');
+            let alertClass;
+            
+            switch(type) {
+                case 'success':
+                    alertClass = 'alert-success';
+                    break;
+                case 'warning':
+                    alertClass = 'alert-warning';
+                    break;
+                case 'error':
+                    alertClass = 'alert-error';
+                    break;
+                default:
+                    alertClass = 'alert-success';
+            }
+            
+            alertContainer.innerHTML = `
+                <div class="alert ${alertClass}">
+                    ${message}
+                </div>
+            `;
+            
+            // Remover alerta después de 5 segundos
+            setTimeout(() => {
+                alertContainer.innerHTML = '';
+            }, 5000);
+        }
+        
+        // Enviar formulario
+        async function submitForm() {
+            const form = document.getElementById('sampleForm');
+            const formData = new FormData(form);
+            
+            // Validar campos requeridos
+            if (!form.checkValidity()) {
+                showAlert('Por favor complete todos los campos requeridos', 'error');
+                return;
+            }
+            
+            // Validar coordenadas
+            if (!selectedCoordinates) {
+                showAlert('Por favor seleccione las coordenadas en el mapa', 'error');
+                return;
+            }
+            
+            try {
+                const puntoToma = formData.get('puntoToma');
+                
+                // Determinar el tipo de agua basado en el punto de toma según las nuevas especificaciones
+                const tipoAgua = getTipoAgua(puntoToma);
+                
+                if (!tipoAgua) {
+                    showAlert('Error: No se pudo determinar el tipo de agua', 'error');
+                    return;
+                }
+                
+                const data = {
+                    cliente: formData.get('cliente'),
+                    codigo_muestra: formData.get('codigoMuestra'),
+                    tecnico: formData.get('tecnico'),
+                    tipo_agua: tipoAgua,
+                    punto_toma: puntoToma,
+                    fecha_toma: formData.get('fechaToma'),
+                    hora_toma: formData.get('horaToma'),
+                    referencia: formData.get('referencia'),
+                    sector: formData.get('sector'),
+                    coordenadas: `(${selectedCoordinates.lng},${selectedCoordinates.lat})`
+                };
+                
+                console.log('Datos a enviar:', data);
+                
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/toma_muestras`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=minimal'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                if (response.ok) {
+                    showAlert(`Muestra registrada exitosamente como ${tipoAgua === 'cruda' ? 'AGUA CRUDA' : 'AGUA POTABLE'}`, 'success');
+                    resetForm();
+                } else {
+                    const error = await response.text();
+                    console.error('Error response:', error);
+                    showAlert('Error al registrar la muestra: ' + error, 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Error al conectar con la base de datos', 'error');
+            }
+        }
+        
+        // Limpiar formulario
+        function resetForm() {
+            document.getElementById('sampleForm').reset();
+            clearCoordinates();
+            document.getElementById('ptapSection').style.display = 'none';
+            document.getElementById('coordenadasManuales').style.display = 'none';
+            document.getElementById('tipoAguaIndicator').classList.add('hidden');
+        }
+        
+        // Volver al geoportal
+        function goBack() {
+            // Si la ventana fue abierta desde otra ventana, cerrarla
+            if (window.opener) {
+                window.close();
+            } else {
+                // Si no, intentar ir atrás en el historial
+                if (window.history.length > 1) {
+                    window.history.back();
+                } else {
+                    // Como último recurso, redirigir al geoportal
+                    window.location.href = 'geoportal_mbs_v2.html';
+                }
+            }
+        }
+        
+        // Establecer fecha actual por defecto
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('fechaToma').value = today;
+            
+            const now = new Date().toTimeString().split(' ')[0].substring(0, 5);
+            document.getElementById('horaToma').value = now;
+            
+            initMap();
+        });
+    </script>
+</body>
+</html>
