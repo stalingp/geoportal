@@ -666,16 +666,6 @@
             const turbiedadOK = data.filter(a => a.turbiedad <= LIMITS.turbiedad).length;
             const coliformesOK = data.filter(a => a.coliformes_fecales === LIMITS.coliformes).length;
             
-            // Estadísticas por tipo de ensayo
-            const ensayoStats = {};
-            data.forEach(item => {
-                const ensayo = item.ensayo || 'sin_especificar';
-                if (!ensayoStats[ensayo]) {
-                    ensayoStats[ensayo] = 0;
-                }
-                ensayoStats[ensayo]++;
-            });
-            
             let statsHTML = `
                 <div class="stat-card">
                     <div class="stat-number">${totalMuestras}</div>
@@ -728,18 +718,6 @@
                     <div class="stat-label">Cumplimiento General</div>
                 </div>
             `;
-            
-            // Agregar estadísticas por tipo de ensayo
-            Object.keys(ensayoStats).forEach(ensayo => {
-                const count = ensayoStats[ensayo];
-                const ensayoName = ENSAYO_NAMES[ensayo] || ensayo;
-                statsHTML += `
-                    <div class="stat-card">
-                        <div class="stat-number">${count}</div>
-                        <div class="stat-label">${ensayoName}</div>
-                    </div>
-                `;
-            });
             
             statsGrid.innerHTML = statsHTML;
         }
