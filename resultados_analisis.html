@@ -301,6 +301,32 @@
             font-style: italic;
         }
         
+        .ensayo-badge {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            background: #e9ecef;
+            color: #495057;
+        }
+        
+        .ensayo-fisicoquimico {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .ensayo-microbiologico {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .ensayo-completo {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
         @media (max-width: 768px) {
             .container {
                 margin: 1rem auto;
@@ -341,6 +367,8 @@
                         <option value="Zapotillo">Zapotillo</option>
                     </select>
                 </div>
+                
+
                 
                 <div class="form-group">
                     <label for="fechaInicio">Fecha Inicio:</label>
@@ -391,6 +419,7 @@
                                 <th>Código Muestra</th>
                                 <th>Cantón</th>
                                 <th>Punto de Toma</th>
+                                <th>Ensayo</th>
                                 <th>Turbiedad (NTU)</th>
                                 <th>Coliformes (UFC)</th>
                                 <th>Estado</th>
@@ -424,6 +453,7 @@
                                 <th>Código Muestra</th>
                                 <th>Cantón</th>
                                 <th>Punto de Toma</th>
+                                <th>Ensayo</th>
                                 <th>Turbiedad (NTU)</th>
                                 <th>Cloro (mg/L)</th>
                                 <th>Coliformes (UFC)</th>
@@ -480,9 +510,38 @@
             'punto_domiciliario': 'Punto domiciliario'
         };
         
+        // Nombres legibles para tipos de ensayo
+        const ENSAYO_NAMES = {
+            'fisicoquimico': 'Fisicoquímico',
+            'microbiologico': 'Microbiológico',
+            'completo': 'Completo'
+        };
+        
         // Clasificación de puntos de toma
         const AGUA_CRUDA_POINTS = ['agua_cruda', 'ingreso_planta'];
         const AGUA_POTABLE_POINTS = ['agua_almacenada', 'red_distribucion', 'punto_domiciliario'];
+        
+        // Función auxiliar para formatear fecha correctamente
+        function formatDateForDisplay(dateString) {
+            // Parsear solo la parte de la fecha (YYYY-MM-DD) sin hora
+            const [year, month, day] = dateString.split('T')[0].split('-');
+            const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+            
+            return date.toLocaleDateString('es-EC', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            });
+        }
+        
+        // Función auxiliar para formatear fecha para CSV
+        function formatDateForCSV(dateString) {
+            // Parsear solo la parte de la fecha (YYYY-MM-DD) sin hora
+            const [year, month, day] = dateString.split('T')[0].split('-');
+            const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+            
+            return date.toLocaleDateString('es-EC');
+        }
         
         // Cargar datos de análisis
         async function loadAnalysisData() {
@@ -493,19 +552,8 @@
             showLoading();
             
             try {
-                // Construir query base
+                // Construir query base - obtener todos los datos primero
                 let query = `${SUPABASE_URL}/rest/v1/analisis_muestras?select=*,toma_muestras(*)`;
-                
-                // Construir filtros solo para cantón y fechas
-                const filters = [];
-                if (canton) filters.push(`toma_muestras.cliente=eq.${canton}`);
-                if (fechaInicio) filters.push(`toma_muestras.fecha_toma=gte.${fechaInicio}`);
-                if (fechaFin) filters.push(`toma_muestras.fecha_toma=lte.${fechaFin}`);
-                
-                // Agregar filtros a la query
-                if (filters.length > 0) {
-                    query += '&' + filters.join('&');
-                }
                 
                 console.log('Query construida:', query);
                 
@@ -525,11 +573,39 @@
                 console.log('Datos recibidos:', rawData);
                 
                 // Filtrar datos que tengan toma_muestras válida
-                analysisData = rawData.filter(item => item.toma_muestras && item.toma_muestras.punto_toma);
+                let filteredData = rawData.filter(item => item.toma_muestras && item.toma_muestras.punto_toma);
+                
+                // Aplicar filtros de cantón
+                if (canton) {
+                    filteredData = filteredData.filter(item => item.toma_muestras.cliente === canton);
+                }
+                
+                // Aplicar filtros de fecha
+                if (fechaInicio || fechaFin) {
+                    filteredData = filteredData.filter(item => {
+                        const fechaMuestra = item.toma_muestras.fecha_toma;
+                        
+                        // Verificar fecha inicio
+                        if (fechaInicio && fechaMuestra < fechaInicio) {
+                            return false;
+                        }
+                        
+                        // Verificar fecha fin
+                        if (fechaFin && fechaMuestra > fechaFin) {
+                            return false;
+                        }
+                        
+                        return true;
+                    });
+                }
+                
+                analysisData = filteredData;
                 
                 if (analysisData.length === 0) {
                     showAlert('No se encontraron análisis con los filtros seleccionados', 'warning');
                     hideLoading();
+                    // Ocultar la sección de resultados cuando no hay datos
+                    document.getElementById('resultsSection').style.display = 'none';
                     return;
                 }
                 
@@ -590,6 +666,16 @@
             const turbiedadOK = data.filter(a => a.turbiedad <= LIMITS.turbiedad).length;
             const coliformesOK = data.filter(a => a.coliformes_fecales === LIMITS.coliformes).length;
             
+            // Estadísticas por tipo de ensayo
+            const ensayoStats = {};
+            data.forEach(item => {
+                const ensayo = item.ensayo || 'sin_especificar';
+                if (!ensayoStats[ensayo]) {
+                    ensayoStats[ensayo] = 0;
+                }
+                ensayoStats[ensayo]++;
+            });
+            
             let statsHTML = `
                 <div class="stat-card">
                     <div class="stat-number">${totalMuestras}</div>
@@ -642,6 +728,18 @@
                     <div class="stat-label">Cumplimiento General</div>
                 </div>
             `;
+            
+            // Agregar estadísticas por tipo de ensayo
+            Object.keys(ensayoStats).forEach(ensayo => {
+                const count = ensayoStats[ensayo];
+                const ensayoName = ENSAYO_NAMES[ensayo] || ensayo;
+                statsHTML += `
+                    <div class="stat-card">
+                        <div class="stat-number">${count}</div>
+                        <div class="stat-label">${ensayoName}</div>
+                    </div>
+                `;
+            });
             
             statsGrid.innerHTML = statsHTML;
         }
@@ -771,25 +869,46 @@
             }
         }
         
+        // Función auxiliar para obtener clase CSS del ensayo
+        function getEnsayoClass(ensayo) {
+            if (!ensayo) return 'ensayo-badge';
+            
+            switch (ensayo.toLowerCase()) {
+                case 'fisicoquimico':
+                    return 'ensayo-badge ensayo-fisicoquimico';
+                case 'microbiologico':
+                    return 'ensayo-badge ensayo-microbiologico';
+                case 'completo':
+                    return 'ensayo-badge ensayo-completo';
+                default:
+                    return 'ensayo-badge';
+            }
+        }
+        
         // Generar tabla
         function generateTable(tipo, data) {
             const tableBody = document.getElementById(`agua${tipo.charAt(0).toUpperCase() + tipo.slice(1)}TableBody`);
             
             if (data.length === 0) {
-                const colspanCount = tipo === 'cruda' ? 7 : 8;
+                const colspanCount = tipo === 'cruda' ? 8 : 9;
                 tableBody.innerHTML = `<tr><td colspan="${colspanCount}" class="no-data">No hay datos disponibles para este tipo de agua</td></tr>`;
                 return;
             }
             
             tableBody.innerHTML = data.map(analysis => {
                 const muestra = analysis.toma_muestras;
-                const fecha = new Date(muestra.fecha_toma).toLocaleDateString('es-EC');
+                const fecha = formatDateForDisplay(muestra.fecha_toma);
                 
                 // Determinar estado de cumplimiento según tipo de agua
                 const turbiedadOK = analysis.turbiedad <= LIMITS.turbiedad;
                 const coliformesOK = analysis.coliformes_fecales === LIMITS.coliformes;
                 
                 let estadoClass, estadoText;
+                
+                // Generar badge del ensayo
+                const ensayoName = ENSAYO_NAMES[analysis.ensayo] || analysis.ensayo || 'N/A';
+                const ensayoClass = getEnsayoClass(analysis.ensayo);
+                const ensayoBadge = `<span class="${ensayoClass}">${ensayoName}</span>`;
                 
                 if (tipo === 'cruda') {
                     // Para agua cruda: solo evaluar turbiedad y coliformes
@@ -807,6 +926,7 @@
                             <td>${muestra.codigo_muestra}</td>
                             <td>${muestra.cliente}</td>
                             <td>${PUNTO_TOMA_NAMES[muestra.punto_toma] || muestra.punto_toma}</td>
+                            <td>${ensayoBadge}</td>
                             <td>${analysis.turbiedad} ${turbiedadOK ? '✓' : '⚠'}</td>
                             <td>${analysis.coliformes_fecales} ${coliformesOK ? '✓' : '⚠'}</td>
                             <td><span class="compliance-indicator ${estadoClass}">${estadoText}</span></td>
@@ -833,6 +953,7 @@
                             <td>${muestra.codigo_muestra}</td>
                             <td>${muestra.cliente}</td>
                             <td>${PUNTO_TOMA_NAMES[muestra.punto_toma] || muestra.punto_toma}</td>
+                            <td>${ensayoBadge}</td>
                             <td>${analysis.turbiedad} ${turbiedadOK ? '✓' : '⚠'}</td>
                             <td>${analysis.cloro !== null ? analysis.cloro + (cloroOK ? ' ✓' : ' ⚠') : 'N/A'}</td>
                             <td>${analysis.coliformes_fecales} ${coliformesOK ? '✓' : '⚠'}</td>
@@ -881,10 +1002,11 @@
                 const muestra = analysis.toma_muestras;
                 return {
                     'Tipo de Agua': 'Agua Cruda',
-                    'Fecha': new Date(muestra.fecha_toma).toLocaleDateString('es-EC'),
+                    'Fecha': formatDateForCSV(muestra.fecha_toma),
                     'Código Muestra': muestra.codigo_muestra,
                     'Cantón': muestra.cliente,
                     'Punto de Toma': PUNTO_TOMA_NAMES[muestra.punto_toma] || muestra.punto_toma,
+                    'Ensayo': ENSAYO_NAMES[analysis.ensayo] || analysis.ensayo || 'N/A',
                     'Técnico': muestra.tecnico,
                     'Laboratorista': analysis.laboratorista,
                     'Turbiedad (NTU)': analysis.turbiedad,
@@ -899,10 +1021,11 @@
                 const muestra = analysis.toma_muestras;
                 return {
                     'Tipo de Agua': 'Agua Potable',
-                    'Fecha': new Date(muestra.fecha_toma).toLocaleDateString('es-EC'),
+                    'Fecha': formatDateForCSV(muestra.fecha_toma),
                     'Código Muestra': muestra.codigo_muestra,
                     'Cantón': muestra.cliente,
                     'Punto de Toma': PUNTO_TOMA_NAMES[muestra.punto_toma] || muestra.punto_toma,
+                    'Ensayo': ENSAYO_NAMES[analysis.ensayo] || analysis.ensayo || 'N/A',
                     'Técnico': muestra.tecnico,
                     'Laboratorista': analysis.laboratorista,
                     'Turbiedad (NTU)': analysis.turbiedad,
@@ -923,7 +1046,7 @@
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = `analisis_agua_separado_${new Date().toISOString().split('T')[0]}.csv`;
+            link.download = `analisis_agua_con_ensayos_${new Date().toISOString().split('T')[0]}.csv`;
             link.click();
             
             showAlert('Datos exportados exitosamente', 'info');
