@@ -387,6 +387,40 @@
         </div>
     </div>
     
+    <!-- Modal de Autenticación -->
+    <div id="authModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeAuthModal()">&times;</span>
+            <h2>🔒 Acceso Restringido</h2>
+            <p>Para acceder a la Gestión de Muestras, ingrese la contraseña:</p>
+            
+            <div style="margin-top: 2rem;">
+                <div style="margin-bottom: 1rem;">
+                    <label for="passwordInput" style="display: block; margin-bottom: 0.5rem; font-weight: bold; color: #2c3e50;">
+                        Contraseña:
+                    </label>
+                    <input type="password" id="passwordInput" 
+                           style="width: 100%; padding: 0.8rem; border: 2px solid #ddd; border-radius: 4px; font-size: 1rem;"
+                           placeholder="Ingrese la contraseña"
+                           onkeypress="handlePasswordKeyPress(event)">
+                </div>
+                
+                <div id="authError" style="color: #e74c3c; margin-bottom: 1rem; font-size: 0.9rem; display: none;">
+                    ❌ Contraseña incorrecta. Intente nuevamente.
+                </div>
+                
+                <div style="display: flex; gap: 1rem;">
+                    <button class="btn" onclick="validatePassword()" style="flex: 1;">
+                        🔓 Acceder
+                    </button>
+                    <button class="btn secondary" onclick="closeAuthModal()" style="flex: 1;">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Modal Laboratorio -->
     <div id="labModal" class="modal">
         <div class="modal-content">
@@ -447,7 +481,7 @@
                     🧪 Laboratorio de Agua
                 </div>
                 <div class="panel-content">
-                    <button class="btn" onclick="openLabModal()" style="width: 100%; margin-bottom: 0.5rem;">
+                    <button class="btn" onclick="openAuthModal()" style="width: 100%; margin-bottom: 0.5rem;">
                         Gestión de Muestras
                     </button>
                     <button class="btn btn-secondary" onclick="openAnalysisResults()" style="width: 100%;">
@@ -473,6 +507,7 @@
         let layers = {};
         let layerColors = {};
         
+
         // Configuración de capas con orden específico
         const LAYER_CONFIG = {
             'cantonal_Loja': { 
@@ -535,6 +570,9 @@
             }
         };
         
+        // Configuración de seguridad
+        const LAB_PASSWORD = 'MBS2024'; // Cambie esta contraseña según sea necesario
+        
         // Funciones para el modal
         function openModal() {
             document.getElementById('aboutModal').style.display = 'block';
@@ -542,6 +580,42 @@
         
         function closeModal() {
             document.getElementById('aboutModal').style.display = 'none';
+        }
+        
+        // Funciones para el modal de autenticación
+        function openAuthModal() {
+            document.getElementById('authModal').style.display = 'block';
+            document.getElementById('passwordInput').focus();
+            document.getElementById('authError').style.display = 'none';
+            document.getElementById('passwordInput').value = '';
+        }
+        
+        function closeAuthModal() {
+            document.getElementById('authModal').style.display = 'none';
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('authError').style.display = 'none';
+        }
+        
+        function handlePasswordKeyPress(event) {
+            if (event.key === 'Enter') {
+                validatePassword();
+            }
+        }
+        
+        function validatePassword() {
+            const password = document.getElementById('passwordInput').value;
+            const errorDiv = document.getElementById('authError');
+            
+            if (password === LAB_PASSWORD) {
+                // Contraseña correcta - cerrar modal de auth y abrir lab modal
+                closeAuthModal();
+                openLabModal();
+            } else {
+                // Contraseña incorrecta - mostrar error
+                errorDiv.style.display = 'block';
+                document.getElementById('passwordInput').value = '';
+                document.getElementById('passwordInput').focus();
+            }
         }
         
         // Funciones para el modal del laboratorio
@@ -574,10 +648,14 @@
         window.onclick = function(event) {
             const aboutModal = document.getElementById('aboutModal');
             const labModal = document.getElementById('labModal');
+            const authModal = document.getElementById('authModal');
+            
             if (event.target === aboutModal) {
                 closeModal();
             } else if (event.target === labModal) {
                 closeLabModal();
+            } else if (event.target === authModal) {
+                closeAuthModal();
             }
         }
         
