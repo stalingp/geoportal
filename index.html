@@ -480,21 +480,21 @@
                 description: 'Límites cantonales de Loja', 
                 type: 'polygon',
                 color: '#e74c3c',
-                order: 1
+                order: 8
             },
             'cantonal_mancomunado': { 
                 name: 'Cantones de la MBS', 
                 description: 'Límites de los cantones de la MBS', 
                 type: 'polygon',
-                color: '#3498db',
-                order: 2
+                color: '#516A24',
+                order: 7
             },
             'parroquial_mancomunado': { 
                 name: 'Parroquias de la MBS', 
                 description: 'Límites parroquiales MBS', 
                 type: 'polygon',
                 color: '#2ecc71',
-                order: 3,
+                order: 6,
                 style: 'dashed-no-fill'
             },
             'centros_urbanos': { 
@@ -502,35 +502,36 @@
                 description: 'Centros urbanos de la MBS', 
                 type: 'point',
                 color: '#f39c12',
-                order: 4
+                order: 5
             },
             'PTAP_cab_cantonal': { 
                 name: 'PTAP Cabecera Cantonal', 
                 description: 'Plantas de tratamiento de agua potable - cabecera cantonal', 
                 type: 'point',
                 color: '#9b59b6',
-                order: 5
+                order: 3
             },
             'PTAP_parroquias': { 
                 name: 'PTAP Parroquias', 
                 description: 'Plantas de tratamiento de agua potable - parroquiales', 
                 type: 'point',
-                color: '#1abc9c',
-                order: 6
+                color: '#565DBA',
+                order: 2
             },
             'rios_dobles': { 
                 name: 'Ríos Dobles', 
                 description: 'Red hídrica de ríos dobles', 
                 type: 'line',
                 color: '#2980b9',
-                order: 7
+                order: 4
             },
             'toma_muestras': { 
                 name: 'Puntos de Toma de Muestras', 
                 description: 'Ubicaciones donde se han tomado muestras de agua', 
                 type: 'point',
                 color: '#e67e22',
-                order: 8
+                order: 1,
+                customIcon: true
             }
         };
         
@@ -794,14 +795,25 @@
                             const leafletFeature = L.geoJSON(geoJsonFeature, {
                                 style: style,
                                 pointToLayer: function(feature, latlng) {
-                                    return L.circleMarker(latlng, {
-                                        radius: 8,
-                                        fillColor: color,
-                                        color: color,
-                                        weight: 2,
-                                        opacity: 1,
-                                        fillOpacity: 0.8
-                                    });
+                                    // Usar ícono personalizado para toma de muestras
+                                    if (tableName === 'toma_muestras' && config.customIcon) {
+                                        const customIcon = L.divIcon({
+                                            html: '<div style="background-color: ' + color + '; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 10px; color: white; font-weight: bold;">💧</div>',
+                                            className: 'custom-div-icon',
+                                            iconSize: [26, 26],
+                                            iconAnchor: [13, 13]
+                                        });
+                                        return L.marker(latlng, { icon: customIcon });
+                                    } else {
+                                        return L.circleMarker(latlng, {
+                                            radius: 8,
+                                            fillColor: color,
+                                            color: color,
+                                            weight: 2,
+                                            opacity: 1,
+                                            fillOpacity: 0.8
+                                        });
+                                    }
                                 }
                             });
                             
