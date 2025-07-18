@@ -507,7 +507,6 @@
         let layers = {};
         let layerColors = {};
         
-
         // Configuración de capas con orden específico
         const LAYER_CONFIG = {
             'cantonal_Loja': { 
@@ -550,7 +549,7 @@
                 name: 'PTAP Parroquias', 
                 description: 'Plantas de tratamiento de agua potable - parroquiales', 
                 type: 'point',
-                color: '#565DBA',
+                color: '#994837',
                 order: 2
             },
             'rios_dobles': { 
@@ -570,8 +569,17 @@
             }
         };
         
-        // Configuración de seguridad
-        const LAB_PASSWORD = 'MBS2024'; // Cambie esta contraseña según sea necesario
+        const LAB_PASSWORD_HASH = '8acb07008c0789df76d72e71eb724c43f9461204c68be84ee662da01b5e10eb9';
+        
+        // Función para generar hash SHA-256
+        async function generateHash(text) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(text);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            return hashHex;
+        }
         
         // Funciones para el modal
         function openModal() {
@@ -598,23 +606,33 @@
         
         function handlePasswordKeyPress(event) {
             if (event.key === 'Enter') {
+                event.preventDefault();
                 validatePassword();
             }
         }
         
-        function validatePassword() {
+        async function validatePassword() {
             const password = document.getElementById('passwordInput').value;
             const errorDiv = document.getElementById('authError');
             
-            if (password === LAB_PASSWORD) {
-                // Contraseña correcta - cerrar modal de auth y abrir lab modal
-                closeAuthModal();
-                openLabModal();
-            } else {
-                // Contraseña incorrecta - mostrar error
+            try {
+                // Generar hash de la contraseña ingresada
+                const inputHash = await generateHash(password);
+                
+                if (inputHash === LAB_PASSWORD_HASH) {
+                    // Contraseña correcta - cerrar modal de auth y abrir lab modal
+                    closeAuthModal();
+                    openLabModal();
+                } else {
+                    // Contraseña incorrecta - mostrar error
+                    errorDiv.style.display = 'block';
+                    document.getElementById('passwordInput').value = '';
+                    document.getElementById('passwordInput').focus();
+                }
+            } catch (error) {
+                console.error('Error al validar contraseña:', error);
                 errorDiv.style.display = 'block';
-                document.getElementById('passwordInput').value = '';
-                document.getElementById('passwordInput').focus();
+                errorDiv.textContent = '❌ Error al procesar la contraseña. Intente nuevamente.';
             }
         }
         
