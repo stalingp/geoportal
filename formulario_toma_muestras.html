@@ -413,33 +413,44 @@
         
         // Inicializar mapa
         function initMap() {
-            map = L.map('map').setView([-4.0, -79.2], 9);
-            
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors'
-            }).addTo(map);
-            
-            // Evento de clic en el mapa
-            map.on('click', function(e) {
-                const puntoToma = document.getElementById('puntoToma').value;
-                const necesitaCoordenadas = ['red_distribucion', 'punto_domiciliario'].includes(puntoToma);
+            try {
+                map = L.map('map').setView([-4.0, -79.2], 9);
                 
-                if (necesitaCoordenadas) {
-                    setCoordinates(e.latlng.lat, e.latlng.lng);
-                } else if (puntoToma) {
-                    showAlert('Para este tipo de punto de toma debe seleccionar una PTAP, no coordenadas manuales', 'warning');
-                } else {
-                    showAlert('Primero seleccione el punto de toma de la muestra', 'warning');
-                }
-            });
-            
-            // Cargar PTAP data
-            loadPtapData();
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors'
+                }).addTo(map);
+                
+                // Evento de clic en el mapa
+                map.on('click', function(e) {
+                    const puntoToma = document.getElementById('puntoToma').value;
+                    // Ahora incluye 'agua_cruda' en los puntos que necesitan coordenadas
+                    const necesitaCoordenadas = ['agua_cruda', 'red_distribucion', 'punto_domiciliario'].includes(puntoToma);
+                    
+                    if (necesitaCoordenadas) {
+                        setCoordinates(e.latlng.lat, e.latlng.lng);
+                    } else if (puntoToma === 'ingreso_planta' || puntoToma === 'agua_almacenada') {
+                        showAlert('Para este tipo de punto de toma debe seleccionar una PTAP, no coordenadas manuales', 'warning');
+                    } else {
+                        showAlert('Primero seleccione el punto de toma de la muestra', 'warning');
+                    }
+                });
+                
+                console.log('Mapa inicializado correctamente');
+                
+                // Cargar PTAP data
+                loadPtapData();
+                
+            } catch (error) {
+                console.error('Error inicializando mapa:', error);
+                showAlert('Error al inicializar el mapa', 'error');
+            }
         }
         
         // Cargar datos de PTAP
         async function loadPtapData() {
             try {
+                console.log('Cargando datos de PTAP...');
+                
                 // Cargar PTAP cantonales
                 const cantonalResponse = await fetch(`${SUPABASE_URL}/rest/v1/PTAP_cab_cantonal?select=*`, {
                     headers: {
@@ -460,6 +471,9 @@
                     const cantonalData = await cantonalResponse.json();
                     const parroquialData = await parroquialResponse.json();
                     
+                    console.log('Datos cantonales:', cantonalData);
+                    console.log('Datos parroquiales:', parroquialData);
+                    
                     // Procesar datos cantonales
                     const cantonalProcessed = cantonalData.map(p => ({
                         ...p,
@@ -477,6 +491,7 @@
                     }));
                     
                     ptapData = [...cantonalProcessed, ...parroquialProcessed];
+                    console.log('PTAP data procesada:', ptapData);
                     updatePtapSelect();
                 } else {
                     console.error('Error cargando PTAP data');
@@ -520,6 +535,8 @@
                 option.textContent = `${ptap.nombre_display} (${ptap.tipo || 'cantonal'})`;
                 select.appendChild(option);
             });
+            
+            console.log('Select de PTAP actualizado con', ptapData.length, 'opciones');
         }
         
         // Determinar tipo de agua según punto de toma
@@ -555,24 +572,24 @@
             const coordenadasManuales = document.getElementById('coordenadasManuales');
             const referencia = document.getElementById('referencia');
             
+            console.log('Punto de toma seleccionado:', puntoToma);
+            
             // Limpiar coordenadas anteriores
             clearCoordinates();
             
             // Mostrar indicador de tipo de agua
             showTipoAguaIndicator(puntoToma);
             
-            // Determinar si necesita PTAP o coordenadas manuales
-            const necesitaPTAP = AGUA_CRUDA_POINTS.includes(puntoToma) || puntoToma === 'agua_almacenada';
-            const necesitaCoordenadas = ['red_distribucion', 'punto_domiciliario'].includes(puntoToma);
+            // MODIFICADO: Ahora 'agua_cruda' necesita coordenadas manuales, solo 'ingreso_planta' y 'agua_almacenada' necesitan PTAP
+            const necesitaPTAP = puntoToma === 'ingreso_planta' || puntoToma === 'agua_almacenada';
+            const necesitaCoordenadas = ['agua_cruda', 'red_distribucion', 'punto_domiciliario'].includes(puntoToma);
             
             if (necesitaPTAP) {
                 ptapSection.style.display = 'block';
                 coordenadasManuales.style.display = 'none';
                 
                 // Actualizar placeholder de referencia
-                if (puntoToma === 'agua_cruda') {
-                    referencia.placeholder = 'Ej: Agua cruda - Captación río San Luis';
-                } else if (puntoToma === 'ingreso_planta') {
+                if (puntoToma === 'ingreso_planta') {
                     referencia.placeholder = 'Ej: Ingreso planta de tratamiento - Filtro de entrada';
                 } else if (puntoToma === 'agua_almacenada') {
                     referencia.placeholder = 'Ej: Agua almacenada - Tanque de reserva principal';
@@ -582,7 +599,9 @@
                 coordenadasManuales.style.display = 'block';
                 
                 // Actualizar placeholder de referencia
-                if (puntoToma === 'red_distribucion') {
+                if (puntoToma === 'agua_cruda') {
+                    referencia.placeholder = 'Ej: Agua cruda - Captación río San Luis, sector La Bocana';
+                } else if (puntoToma === 'red_distribucion') {
                     referencia.placeholder = 'Ej: Red de distribución - Barrio Centro, válvula principal';
                 } else if (puntoToma === 'punto_domiciliario') {
                     referencia.placeholder = 'Ej: Punto domiciliario - Familia Jaramillo, calle Eloy Alfaro s/n';
@@ -598,6 +617,8 @@
         function handlePtapSelection() {
             const select = document.getElementById('ptapSelect');
             const ptapInfo = document.getElementById('ptapInfo');
+            
+            console.log('PTAP seleccionada:', select.value);
             
             if (select.value) {
                 const ptap = JSON.parse(select.value);
@@ -667,6 +688,8 @@
             
             // Centrar mapa en las coordenadas
             map.setView([lat, lng], Math.max(map.getZoom(), 12));
+            
+            console.log('Coordenadas establecidas:', lat, lng);
         }
         
         // Limpiar coordenadas
@@ -806,13 +829,18 @@
         
         // Establecer fecha actual por defecto
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM cargado, inicializando aplicación...');
+            
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('fechaToma').value = today;
             
             const now = new Date().toTimeString().split(' ')[0].substring(0, 5);
             document.getElementById('horaToma').value = now;
             
-            initMap();
+            // Inicializar mapa después de un pequeño delay para asegurar que el DOM esté listo
+            setTimeout(() => {
+                initMap();
+            }, 100);
         });
     </script>
 </body>
